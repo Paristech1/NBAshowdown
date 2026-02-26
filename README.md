@@ -46,8 +46,8 @@ Think of it as "Hot or Not" meets NBA stats, with a twist of March Madness brack
 
 ### Backend
 - **FastAPI** - Python backend that's faster than a LaMelo Ball fastbreak
-- **nba_api** - Official NBA stats (the good stuff)
-- **Pandas** - Data wrangling like a pro
+- **NBA CDN** - Real-time stats from `cdn.nba.com` (works from any server)
+- **Concurrent Fetching** - ThreadPoolExecutor for parallel box score loading
 - **CORS Middleware** - So frontend and backend can be friends
 
 ## 🚀 Getting Started
@@ -70,7 +70,7 @@ cd NBAshowdown
 cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install -r requirements.txt
+pip install -r requirements.txt  # fastapi, uvicorn, requests
 uvicorn main:app --reload --port 8000
 ```
 
