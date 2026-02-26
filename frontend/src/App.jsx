@@ -1,11 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
-import { FaBasketballBall, FaTrophy, FaShareAlt, FaLink, FaChevronDown, FaChevronUp, FaFilter, FaCalendarAlt, FaHistory } from 'react-icons/fa';
+import { FaBasketballBall, FaTrophy, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaRedditAlien, FaInstagram, FaDownload } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import React from 'react';
 import './App.css';
 
-// --- Constants ---
 const API_BASE = 'http://localhost:8000';
 const STORAGE_KEY = 'nba_showdown_state';
 
@@ -47,10 +46,6 @@ function clearStorage() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-function deriveTeams(players) {
-  return [...new Set(players.map(p => p.TEAM_ABBREVIATION))].sort();
-}
-
 function parsePlayers(data) {
   const players = [];
   if (Array.isArray(data)) {
@@ -63,6 +58,74 @@ function parsePlayers(data) {
 }
 
 const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 760' fill='%23333'%3E%3Crect width='1040' height='760' fill='%23222'/%3E%3Ccircle cx='520' cy='280' r='140' fill='%23444'/%3E%3Cellipse cx='520' cy='600' rx='220' ry='180' fill='%23444'/%3E%3C/svg%3E";
+
+function buildShareText(winner, gs) {
+  return `🏀 My NBA Showdown Player of the Day: ${winner.PLAYER_NAME} (${winner.TEAM_ABBREVIATION}) with a Game Score of ${gs}! #NBAShowdown`;
+}
+
+function generateShareCard(winner, gs, deckAvg) {
+  const canvas = document.createElement('canvas');
+  canvas.width = 1080;
+  canvas.height = 1080;
+  const ctx = canvas.getContext('2d');
+
+  ctx.fillStyle = '#050505';
+  ctx.fillRect(0, 0, 1080, 1080);
+
+  const grd = ctx.createLinearGradient(0, 600, 0, 1080);
+  grd.addColorStop(0, 'rgba(251, 191, 36, 0.0)');
+  grd.addColorStop(1, 'rgba(251, 191, 36, 0.15)');
+  ctx.fillStyle = grd;
+  ctx.fillRect(0, 0, 1080, 1080);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.beginPath();
+  ctx.arc(540, 540, 300, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 28px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('🏀  NBA DAILY SHOWDOWN  🏀', 540, 80);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.4)';
+  ctx.font = '20px sans-serif';
+  ctx.fillText('PLAYER OF THE DAY', 540, 120);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 64px sans-serif';
+  ctx.fillText(winner.PLAYER_NAME, 540, 440);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.6)';
+  ctx.font = '32px sans-serif';
+  ctx.fillText(winner.TEAM_ABBREVIATION, 540, 490);
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = 'bold 120px sans-serif';
+  ctx.fillText(gs, 540, 650);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '24px sans-serif';
+  ctx.fillText('GAME SCORE', 540, 690);
+
+  const stats = `${winner.PTS} PTS  •  ${winner.REB} REB  •  ${winner.AST} AST  •  ${winner.STL} STL  •  ${winner.BLK} BLK`;
+  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  ctx.font = '26px sans-serif';
+  ctx.fillText(stats, 540, 770);
+
+  const diff = (gs - deckAvg).toFixed(1);
+  const diffStr = gs > deckAvg ? `+${diff}` : diff;
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '22px sans-serif';
+  ctx.fillText(`Deck Avg: ${deckAvg}  |  vs Avg: ${diffStr}`, 540, 820);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.25)';
+  ctx.font = '18px sans-serif';
+  ctx.fillText(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), 540, 1000);
+  ctx.fillText('nbashowdown.app', 540, 1030);
+
+  return canvas;
+}
 
 // --- PlayerCard ---
 const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggleStats }) => {
@@ -192,11 +255,9 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-// --- Restore saved state (module-level, runs once) ---
 const _saved = loadFromStorage();
 const _hasSaved = !!((_saved) && _saved.leftPlayer && _saved.rightPlayer);
 
-// --- Main App ---
 function App() {
   const [allPlayers, setAllPlayers] = useState(() => _hasSaved ? (_saved.allPlayers || []) : []);
   const [deck, setDeck] = useState(() => _hasSaved ? (_saved.deck || []) : []);
@@ -208,9 +269,6 @@ function App() {
   const [matchLog, setMatchLog] = useState(() => _hasSaved ? (_saved.matchLog || []) : []);
   const [expandedLeft, setExpandedLeft] = useState(false);
   const [expandedRight, setExpandedRight] = useState(false);
-  const [teamFilter, setTeamFilter] = useState('ALL');
-  const [availableTeams, setAvailableTeams] = useState(() => _hasSaved ? deriveTeams(_saved.allPlayers || []) : []);
-  const [selectedDate, setSelectedDate] = useState('');
 
   const winnerCardRef = useRef(null);
 
@@ -225,7 +283,6 @@ function App() {
       return;
     }
     setAllPlayers(players);
-    setAvailableTeams(deriveTeams(players));
     const shuffled = [...players].sort(() => 0.5 - Math.random());
     setLeftPlayer(shuffled[0]);
     setRightPlayer(shuffled[1]);
@@ -236,14 +293,10 @@ function App() {
     setLoading(false);
   }
 
-  function fetchDeck(dateParam) {
+  function fetchDeck() {
     setLoading(true);
     setError(null);
-    const url = dateParam
-      ? `${API_BASE}/api/daily-deck?date=${dateParam}`
-      : `${API_BASE}/api/daily-deck`;
-
-    fetch(url)
+    fetch(`${API_BASE}/api/daily-deck`)
       .then(res => {
         if (!res.ok) throw new Error(`API returned ${res.status}`);
         return res.json();
@@ -256,7 +309,6 @@ function App() {
       });
   }
 
-  // Initial fetch via subscription-style effect (state set in async callback, not synchronously)
   useEffect(() => {
     if (_hasSaved) return;
     let cancelled = false;
@@ -278,40 +330,11 @@ function App() {
     return () => { cancelled = true; };
   }, []);
 
-  // Persist state to localStorage (syncing to external system)
   useEffect(() => {
     if (!loading && leftPlayer) {
       saveToStorage({ allPlayers, deck, leftPlayer, rightPlayer, winner, matchLog });
     }
   });
-
-  function applyTeamFilter(team) {
-    setTeamFilter(team);
-    if (!allPlayers.length) return;
-
-    const filtered = team === 'ALL'
-      ? [...allPlayers]
-      : allPlayers.filter(p => p.TEAM_ABBREVIATION === team);
-
-    if (filtered.length < 2) return;
-
-    const shuffled = filtered.sort(() => 0.5 - Math.random());
-    setLeftPlayer(shuffled[0]);
-    setRightPlayer(shuffled[1]);
-    setDeck(shuffled.slice(2));
-    setWinner(null);
-    setMatchLog([]);
-    setExpandedLeft(false);
-    setExpandedRight(false);
-  }
-
-  function handleDateChange(e) {
-    const val = e.target.value;
-    setSelectedDate(val);
-    clearStorage();
-    setTeamFilter('ALL');
-    fetchDeck(val || null);
-  }
 
   function handlePick(side) {
     if (winner) return;
@@ -350,30 +373,40 @@ function App() {
     clearStorage();
     setWinner(null);
     setMatchLog([]);
-    setTeamFilter('ALL');
     setExpandedLeft(false);
     setExpandedRight(false);
-    fetchDeck(selectedDate || null);
+    fetchDeck();
   }
 
-  async function handleShare() {
+  // --- Social sharing ---
+  function shareToTwitter() {
     if (!winner) return;
-    const gs = computeGameScore(winner);
-    const text = `🏀 My NBA Showdown Player of the Day: ${winner.PLAYER_NAME} (${winner.TEAM_ABBREVIATION}) with a Game Score of ${gs}! #NBAShowdown`;
-
-    if (navigator.share) {
-      try { await navigator.share({ title: 'NBA Daily Showdown', text }); } catch { /* cancelled */ }
-    } else {
-      try { await navigator.clipboard.writeText(text); alert('Copied to clipboard!'); } catch { /* ignore */ }
-    }
+    const text = buildShareText(winner, computeGameScore(winner));
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank', 'width=600,height=400');
   }
 
-  async function handleCopyLink() {
+  function shareToFacebook() {
+    if (!winner) return;
+    const text = buildShareText(winner, computeGameScore(winner));
+    window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}`, '_blank', 'width=600,height=400');
+  }
+
+  function shareToReddit() {
     if (!winner) return;
     const gs = computeGameScore(winner);
-    const dateStr = selectedDate || new Date().toISOString().split('T')[0];
-    const link = `${window.location.origin}/result?player=${encodeURIComponent(winner.PLAYER_NAME)}&score=${gs}&date=${dateStr}`;
-    try { await navigator.clipboard.writeText(link); alert('Link copied!'); } catch { /* ignore */ }
+    const title = `My NBA Showdown Player of the Day: ${winner.PLAYER_NAME} (${winner.TEAM_ABBREVIATION}) — Game Score ${gs}`;
+    const text = buildShareText(winner, gs);
+    window.open(`https://www.reddit.com/submit?title=${encodeURIComponent(title)}&selftext=true&text=${encodeURIComponent(text)}`, '_blank', 'width=800,height=600');
+  }
+
+  function downloadForInstagram() {
+    if (!winner) return;
+    const gs = computeGameScore(winner);
+    const canvas = generateShareCard(winner, gs, deckAvgScore);
+    const link = document.createElement('a');
+    link.download = `nba_showdown_${winner.PLAYER_NAME.replace(/\s+/g, '_')}.png`;
+    link.href = canvas.toDataURL('image/png');
+    link.click();
   }
 
   const deckAvgScore = allPlayers.length > 0
@@ -401,7 +434,7 @@ function App() {
       <div className="error-card">
         <h2>Failed to load games</h2>
         <p>{error}</p>
-        <button className="reset-btn" onClick={() => fetchDeck(selectedDate || null)}>Retry</button>
+        <button className="reset-btn" onClick={fetchDeck}>Retry</button>
       </div>
     </div>
   );
@@ -410,14 +443,9 @@ function App() {
     <div className="container">
       <header className="header">
         <div className="logo-text">DAILY SHOWDOWN</div>
-        <div className="subtitle">No games found for this date</div>
+        <div className="subtitle">No games found today</div>
       </header>
-      <div className="controls-bar">
-        <div className="date-picker-wrap">
-          <FaCalendarAlt size={14} />
-          <input type="date" value={selectedDate} onChange={handleDateChange} className="date-input" />
-        </div>
-      </div>
+      <button className="reset-btn" onClick={fetchDeck}>Try Again</button>
     </div>
   );
 
@@ -487,23 +515,40 @@ function App() {
           </motion.div>
         )}
 
-        <div className="share-bar">
-          <motion.button className="share-btn" onClick={handleShare}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.8 }}>
-            <FaShareAlt /> Share
-          </motion.button>
-          <motion.button className="share-btn" onClick={handleCopyLink}
-            initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.0 }}>
-            <FaLink /> Copy Link
-          </motion.button>
-        </div>
+        <motion.div
+          className="share-section"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.8 }}
+        >
+          <div className="share-label">Share your pick</div>
+          <div className="share-bar">
+            <button className="share-btn twitter" onClick={shareToTwitter} title="Share on X / Twitter">
+              <FaTwitter size={18} />
+              <span>Twitter</span>
+            </button>
+            <button className="share-btn facebook" onClick={shareToFacebook} title="Share on Facebook">
+              <FaFacebookF size={18} />
+              <span>Facebook</span>
+            </button>
+            <button className="share-btn reddit" onClick={shareToReddit} title="Share on Reddit">
+              <FaRedditAlien size={18} />
+              <span>Reddit</span>
+            </button>
+            <button className="share-btn instagram" onClick={downloadForInstagram} title="Download image for Instagram">
+              <FaInstagram size={18} />
+              <span>Instagram</span>
+            </button>
+          </div>
+          <div className="share-hint">Instagram: downloads a share card you can post to your story or feed</div>
+        </motion.div>
 
         <motion.button
           className="reset-btn"
           onClick={resetGame}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
-          transition={{ delay: 1.2 }}
+          transition={{ delay: 1.0 }}
         >
           Play Again
         </motion.button>
@@ -517,28 +562,6 @@ function App() {
         <div className="logo-text">DAILY SHOWDOWN</div>
         <div className="subtitle">Pick your favorite performance</div>
       </header>
-
-      <div className="controls-bar">
-        <div className="date-picker-wrap">
-          <FaCalendarAlt size={14} />
-          <input type="date" value={selectedDate} onChange={handleDateChange} className="date-input" />
-        </div>
-        {availableTeams.length > 0 && (
-          <div className="team-filter-wrap">
-            <FaFilter size={12} />
-            <select
-              value={teamFilter}
-              onChange={(e) => applyTeamFilter(e.target.value)}
-              className="team-select"
-            >
-              <option value="ALL">All Teams</option>
-              {availableTeams.map(t => (
-                <option key={t} value={t}>{t}</option>
-              ))}
-            </select>
-          </div>
-        )}
-      </div>
 
       <motion.div
         className="scoreboard"
