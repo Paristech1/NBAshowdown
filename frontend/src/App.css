@@ -73,49 +73,6 @@ body {
   margin-top: 0.5rem;
 }
 
-/* Controls Bar (Date Picker + Team Filter) */
-.controls-bar {
-  display: flex;
-  gap: 1rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-  justify-content: center;
-}
-
-.date-picker-wrap,
-.team-filter-wrap {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  border-radius: 2rem;
-  padding: 0.5rem 1rem;
-  backdrop-filter: blur(1rem);
-  color: var(--text);
-}
-
-.date-input,
-.team-select {
-  background: transparent;
-  border: none;
-  color: var(--text);
-  font-family: inherit;
-  font-size: 0.85rem;
-  outline: none;
-  cursor: pointer;
-}
-
-.date-input::-webkit-calendar-picker-indicator {
-  filter: invert(1);
-  cursor: pointer;
-}
-
-.team-select option {
-  background: #111;
-  color: #fff;
-}
-
 /* Scoreboard */
 .scoreboard {
   display: flex;
@@ -583,33 +540,71 @@ body {
   margin-top: 0.25rem;
 }
 
-/* Share Bar */
+/* Share Section */
+.share-section {
+  margin-top: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.share-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  opacity: 0.5;
+  font-weight: 600;
+}
+
 .share-bar {
   display: flex;
-  gap: 0.75rem;
-  margin-top: 1.5rem;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  justify-content: center;
 }
 
 .share-btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  background: var(--glass);
-  border: 1px solid var(--glass-border);
-  color: var(--text);
-  padding: 0.7rem 1.5rem;
+  border: none;
+  color: #fff;
+  padding: 0.65rem 1.3rem;
   border-radius: 2rem;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
   font-family: inherit;
   cursor: pointer;
-  backdrop-filter: blur(1rem);
-  transition: background 0.2s, transform 0.2s;
+  transition: transform 0.2s, filter 0.2s;
 }
 
 .share-btn:hover {
-  background: rgba(255, 255, 255, 0.15);
-  transform: scale(1.05);
+  transform: scale(1.08);
+  filter: brightness(1.15);
+}
+
+.share-btn.twitter {
+  background: #1d9bf0;
+}
+
+.share-btn.facebook {
+  background: #1877f2;
+}
+
+.share-btn.reddit {
+  background: #ff4500;
+}
+
+.share-btn.instagram {
+  background: linear-gradient(135deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888);
+}
+
+.share-hint {
+  font-size: 0.7rem;
+  opacity: 0.35;
+  text-align: center;
+  max-width: 360px;
 }
 
 /* Reset Button */
