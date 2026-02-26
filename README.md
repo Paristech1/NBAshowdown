@@ -26,6 +26,15 @@ Think of it as "Hot or Not" meets NBA stats, with a twist of March Madness brack
 - **No Wrong Answers**: This is YOUR opinion. Pick based on stats, loyalty, or just vibes
 - **Recycling System**: Players you pick go back into the deck for potential rematches
 - **Daily Fresh Content**: New games = new showdowns every day
+- **Expanded Stats**: Full box score stats with color coding (green = above avg, red = below)
+- **Game Score**: Performance rating for every player based on weighted stats
+- **Match History**: Path to Victory log tracking every matchup your winner survived
+- **Team Filter**: Filter players by team with a dynamic dropdown
+- **Date Picker**: Play historical showdowns from any date in the season
+- **Share Winner**: Share your Player of the Day via native share or clipboard
+- **PWA**: Install on mobile, offline-capable with cached assets
+- **Smart Caching**: 30-min TTL cache so repeat visits load instantly
+- **Resume Game**: Game state saved to localStorage — refresh without losing progress
 
 ## 🛠️ Tech Stack
 
@@ -61,7 +70,7 @@ cd NBAshowdown
 cd backend
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
-pip install fastapi uvicorn nba_api pandas
+pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 ```
 
@@ -74,6 +83,17 @@ npm run dev
 
 #### 4. Open Your Browser
 Navigate to `http://localhost:5173` and start the showdown! 🏀
+
+## 🔧 Environment Variables
+
+| Variable | Default | Description |
+|---|---|---|
+| `ALLOWED_ORIGINS` | `http://localhost:5173,http://localhost:3000` | Comma-separated list of allowed CORS origins for the backend |
+
+Set environment variables before starting the backend:
+```bash
+export ALLOWED_ORIGINS="http://localhost:5173,https://yourdomain.com"
+```
 
 ## 🎨 Design Philosophy
 
@@ -99,7 +119,6 @@ We wanted this to feel **premium**. No basic MVP vibes here. Think:
 - [ ] Season-long leaderboards
 - [ ] Advanced stats (PER, TS%, +/-)
 - [ ] Player comparison history
-- [ ] Share your "Player of the Day" on social media
 - [ ] Playoff mode with elimination brackets
 
 ## 🤝 Contributing
