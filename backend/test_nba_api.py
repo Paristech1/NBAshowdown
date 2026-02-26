@@ -1,28 +1,48 @@
-from nba_api.stats.endpoints import scoreboardv2, boxscoretraditionalv2
-import pandas as pd
+import main
 
-# 1. Get Games for a specific date
-date_str = '11/18/2025'
-print(f"Checking games for {date_str}...")
-board = scoreboardv2.ScoreboardV2(game_date=date_str)
-games_df = board.game_header.get_data_frame()
-print(games_df)
 
-if not games_df.empty:
-    game_id = games_df.iloc[0]['GAME_ID']
-    print(f"Fetching box score for Game ID: {game_id}")
-    
-    try:
-        box = boxscoretraditionalv2.BoxScoreTraditionalV2(game_id=game_id)
-        stats_df = box.player_stats.get_data_frame()
-        print("Stats DataFrame:")
-        print(stats_df)
-        
-        if stats_df.empty:
-            print("Stats DataFrame is empty!")
-            # Try to print the raw response if possible, or check other data sets
-            print("Available datasets:", box.get_available_data())
-    except Exception as e:
-        print(f"Error: {e}")
-else:
-    print("No games found.")
+def test_get_games_for_date_returns_only_finished_games(monkeypatch):
+    sample_dates = [
+        {
+            "gameDate": "11/18/2025 00:00:00",
+            "games": [
+                {"gameId": "001", "gameStatus": 1},
+                {"gameId": "002", "gameStatus": 3},
+                {"gameId": "003", "gameStatus": 3},
+            ],
+        }
+    ]
+    monkeypatch.setattr(main, "_get_schedule", lambda: sample_dates)
+
+    game_ids = main._get_games_for_date("11/18/2025")
+
+    assert game_ids == ["002", "003"]
+
+
+def test_daily_deck_invalid_date_returns_message():
+    result = main.daily_deck("2025-99-99")
+
+    assert result == {"message": "Invalid date format. Use YYYY-MM-DD.", "pairs": []}
+
+
+def test_daily_deck_uses_cache_for_same_date(monkeypatch):
+    main._cache.clear()
+    calls = {"count": 0}
+
+    monkeypatch.setattr(main, "_get_games_for_date", lambda _: ["g1"])
+    monkeypatch.setattr(main.random, "shuffle", lambda items: None)
+
+    def _fake_fetch(_gid):
+        calls["count"] += 1
+        return [
+            {"PLAYER_ID": 1, "PLAYER_NAME": "A"},
+            {"PLAYER_ID": 2, "PLAYER_NAME": "B"},
+        ]
+
+    monkeypatch.setattr(main, "_fetch_box_score", _fake_fetch)
+
+    first = main.daily_deck("2025-11-18")
+    second = main.daily_deck("2025-11-18")
+
+    assert calls["count"] == 1
+    assert first == second
