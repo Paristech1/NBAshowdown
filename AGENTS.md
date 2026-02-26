@@ -10,13 +10,13 @@ NBA Daily Showdown — a React + Vite frontend (port 5173) with a FastAPI Python
 
 - **Backend**: `cd backend && uvicorn main:app --reload --port 8000`
 - **Frontend**: `cd frontend && npm run dev`
-- **Lint**: `cd frontend && npm run lint` (1 pre-existing `no-unused-vars` error on `motion` import in `App.jsx`)
+- **Lint**: `cd frontend && npm run lint`
 - **Build**: `cd frontend && npm run build`
 
 ### Important caveats
 
-- **NBA API unreachable from cloud VMs**: `stats.nba.com` blocks or rate-limits requests from datacenter IPs. The TLS handshake succeeds but the response never arrives (hangs indefinitely). The app will stay in "LOADING..." state. This is an external network limitation, not a code bug. To test the full game flow, run locally or use a proxy/VPN.
-- **No `requirements.txt`**: Python backend dependencies (`fastapi uvicorn nba_api pandas`) are installed via pip directly. The update script handles this.
-- **`~/.local/bin` must be on PATH**: pip installs `uvicorn` and `fastapi` CLI tools to `~/.local/bin`. The update script ensures this is on PATH.
-- **Backend `get_target_date()` checks 7 days back**: Each check hits the NBA API, which compounds the timeout issue in cloud environments.
-- **CORS**: Backend allows origins `localhost:5173` and `localhost:3000` only.
+- **NBA API unreachable from cloud VMs**: `stats.nba.com` blocks requests from datacenter IPs. The TLS handshake succeeds but the response never arrives (hangs indefinitely). Use the `/api/mock-deck` endpoint instead of `/api/daily-deck` when testing in cloud environments. To use mock data, temporarily change the fetch URL in `App.jsx` from `api/daily-deck` to `api/mock-deck`.
+- **`~/.local/bin` must be on PATH**: pip installs `uvicorn` and `fastapi` CLI to `~/.local/bin`. Run `export PATH="$HOME/.local/bin:$PATH"` before starting the backend, or ensure it's in your shell profile.
+- **CORS**: Backend reads `ALLOWED_ORIGINS` env var (comma-separated). Defaults to `http://localhost:5173,http://localhost:3000`.
+- **Caching**: Backend caches API responses for 30 minutes. Restart the backend to clear the cache.
+- **PWA**: The frontend is configured as a PWA with `vite-plugin-pwa`. Service worker is only active in production builds (`npm run build && npm run preview`), not in dev mode.
