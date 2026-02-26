@@ -5,7 +5,7 @@ import { MdVerified } from 'react-icons/md';
 import React from 'react';
 import './App.css';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = '';
 const STORAGE_KEY = 'nba_showdown_state';
 
 const LEAGUE_AVG = {
