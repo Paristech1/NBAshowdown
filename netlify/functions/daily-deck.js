@@ -10,7 +10,14 @@ const SCHEDULE_URL = `${NBA_CDN_BASE}/staticData/scheduleLeagueV2.json`;
 
 const DAYS_LOOKBACK = 7;
 const TOP_PLAYERS_PER_TEAM = 6;
+const MAX_PLAYERS = 36; // Cap deck to ~36 players (35 picks to win)
+const MIN_PLAYERS = 4; // Require at least 4 players (2 pairs) for a valid game
 const HTTP_TIMEOUT = 15000;
+
+/** Game Score: PTS + REB*1.2 + AST*1.5 + STL*2 + BLK*2 - TOV*1.5 (matches frontend) */
+function gameScore(p) {
+  return p.PTS + p.REB * 1.2 + p.AST * 1.5 + (p.STL ?? 0) * 2 + (p.BLK ?? 0) * 2 - (p.TOV ?? 0) * 1.5;
+}
 
 async function fetchJson(url) {
   const res = await fetch(url, { signal: AbortSignal.timeout(HTTP_TIMEOUT) });
@@ -234,7 +241,27 @@ export default async (req, context) => {
     })
   );
 
-  const shuffled = shuffle(playerPool);
+  // Select top MAX_PLAYERS by Game Score (best performers)
+  const ranked = playerPool
+    .map((p) => ({ ...p, _gs: gameScore(p) }))
+    .sort((a, b) => b._gs - a._gs)
+    .slice(0, MAX_PLAYERS)
+    .map(({ _gs, ...p }) => p);
+
+  if (ranked.length < MIN_PLAYERS) {
+    return new Response(
+      JSON.stringify({ message: `Not enough players (${ranked.length}). Need at least ${MIN_PLAYERS}.`, pairs: [] }),
+      {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      }
+    );
+  }
+
+  const shuffled = shuffle(ranked);
   const pairs = [];
   for (let i = 0; i < shuffled.length - 1; i += 2) {
     pairs.push({

@@ -1,8 +1,10 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
-import { FaBasketballBall, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaRedditAlien, FaInstagram } from 'react-icons/fa';
+import { FaBasketballBall, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaInstagram } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import React from 'react';
+import { parsePlayers, computeGameScore } from './lib/deckUtils';
+import { fetchDailyDeck } from './lib/fetchDeck';
 import './App.css';
 
 const DAILY_DECK_URL = import.meta.env.PROD
@@ -13,17 +15,6 @@ const STORAGE_KEY = 'nba_showdown_state';
 const LEAGUE_AVG = {
   PTS: 15, REB: 5, AST: 5, STL: 1, BLK: 0.5, PLUS_MINUS: 0,
 };
-
-function computeGameScore(p) {
-  return +(
-    p.PTS +
-    p.REB * 1.2 +
-    p.AST * 1.5 +
-    p.STL * 2 +
-    p.BLK * 2 -
-    p.TOV * 1.5
-  ).toFixed(1);
-}
 
 function statColor(key, val) {
   const avg = LEAGUE_AVG[key];
@@ -46,17 +37,6 @@ function loadFromStorage() {
 
 function clearStorage() {
   localStorage.removeItem(STORAGE_KEY);
-}
-
-function parsePlayers(data) {
-  const players = [];
-  if (Array.isArray(data)) {
-    data.forEach(pair => {
-      if (pair.player_left) players.push(pair.player_left);
-      if (pair.player_right) players.push(pair.player_right);
-    });
-  }
-  return players;
 }
 
 const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 760' fill='%23333'%3E%3Crect width='1040' height='760' fill='%23222'/%3E%3Ccircle cx='520' cy='280' r='140' fill='%23444'/%3E%3Cellipse cx='520' cy='600' rx='220' ry='180' fill='%23444'/%3E%3C/svg%3E";
@@ -440,12 +420,15 @@ function App() {
 
   function applyFetchedData(data) {
     const players = parsePlayers(data);
-    if (players.length < 2) {
+    if (players.length < 2 || !players[0] || !players[1]) {
       setAllPlayers([]);
       setDeck([]);
       setLeftPlayer(null);
       setRightPlayer(null);
+      setWinner(null);
+      setMatchLog([]);
       setLoading(false);
+      clearStorage();
       return;
     }
     setAllPlayers(players);
@@ -462,11 +445,7 @@ function App() {
   function fetchDeck() {
     setLoading(true);
     setError(null);
-    fetch(DAILY_DECK_URL)
-      .then(res => {
-        if (!res.ok) throw new Error(`API returned ${res.status}`);
-        return res.json();
-      })
+    fetchDailyDeck(DAILY_DECK_URL)
       .then(applyFetchedData)
       .catch(err => {
         console.error(err);
@@ -478,11 +457,7 @@ function App() {
   useEffect(() => {
     if (_hasSaved) return;
     let cancelled = false;
-    fetch(DAILY_DECK_URL)
-      .then(res => {
-        if (!res.ok) throw new Error(`API returned ${res.status}`);
-        return res.json();
-      })
+    fetchDailyDeck(DAILY_DECK_URL)
       .then(data => {
         if (!cancelled) applyFetchedData(data);
       })
@@ -504,9 +479,9 @@ function App() {
 
   function handlePick(side) {
     if (winner) return;
-
     const selected = side === 'left' ? leftPlayer : rightPlayer;
     const eliminated = side === 'left' ? rightPlayer : leftPlayer;
+    if (!selected || !eliminated) return;
 
     const newLog = [...matchLog, {
       winner: selected.PLAYER_NAME,
@@ -537,10 +512,18 @@ function App() {
 
   function resetGame() {
     clearStorage();
+    setAllPlayers([]);
+    setDeck([]);
+    setLeftPlayer(null);
+    setRightPlayer(null);
     setWinner(null);
     setMatchLog([]);
+    setMatchLogExpanded(false);
     setExpandedLeft(false);
     setExpandedRight(false);
+    setShareImageLoading(false);
+    setError(null);
+    setLoading(true);
     fetchDeck();
   }
 
@@ -555,14 +538,6 @@ function App() {
     if (!winner) return;
     const text = buildShareText(winner, computeGameScore(winner));
     window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}`, '_blank', 'width=600,height=400');
-  }
-
-  function shareToReddit() {
-    if (!winner) return;
-    const gs = computeGameScore(winner);
-    const title = `My NBA Showdown Player of the Game: ${winner.PLAYER_NAME} (${winner.TEAM_ABBREVIATION}) — Game Score ${gs}`;
-    const text = buildShareText(winner, gs);
-    window.open(`https://www.reddit.com/submit?title=${encodeURIComponent(title)}&selftext=true&text=${encodeURIComponent(text)}`, '_blank', 'width=800,height=600');
   }
 
   async function downloadForInstagram() {
@@ -663,24 +638,21 @@ function App() {
           </div>
 
           {winnerMatchups.length > 0 && (
-            <>
+            <div className="match-log-wrapper">
               <button
                 type="button"
                 className="match-log-toggle"
                 onClick={() => setMatchLogExpanded(prev => !prev)}
+                aria-expanded={matchLogExpanded}
               >
                 <FaHistory size={14} />
                 {matchLogExpanded ? 'Hide Path to Victory' : 'Show Path to Victory'}
               </button>
-              <AnimatePresence>
-                {matchLogExpanded && (
-                  <motion.div
-                    className="match-log match-log-collapsible"
-                    initial={{ opacity: 0, height: 0 }}
-                    animate={{ opacity: 1, height: 'auto' }}
-                    exit={{ opacity: 0, height: 0 }}
-                    transition={{ duration: 0.3 }}
-                  >
+              <div
+                className={`match-log-collapsible ${matchLogExpanded ? 'expanded' : ''}`}
+                aria-hidden={!matchLogExpanded}
+              >
+                <div className="match-log">
                   <h3 className="log-title"><FaHistory size={14} /> Path to Victory</h3>
                   <div className="log-chain">
                     {winnerMatchups.map((m, i) => (
@@ -697,10 +669,9 @@ function App() {
                       <span>👑 WINNER</span>
                     </div>
                   </div>
-                </motion.div>
-                )}
-              </AnimatePresence>
-            </>
+                </div>
+              </div>
+            </div>
           )}
 
           <motion.div
@@ -718,10 +689,6 @@ function App() {
               <button className="share-btn facebook" onClick={shareToFacebook} title="Share on Facebook">
                 <FaFacebookF size={18} />
                 <span>Facebook</span>
-              </button>
-              <button className="share-btn reddit" onClick={shareToReddit} title="Share on Reddit">
-                <FaRedditAlien size={18} />
-                <span>Reddit</span>
               </button>
               <button
                 className="share-btn instagram"

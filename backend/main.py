@@ -11,7 +11,18 @@ import requests
 # --- Constants ---
 DAYS_LOOKBACK = 7
 TOP_PLAYERS_PER_TEAM = 6
+MAX_PLAYERS = 36  # Cap deck to ~36 players (35 picks to win)
+MIN_PLAYERS = 4  # Require at least 4 players (2 pairs) for a valid game
 CACHE_TTL_SECONDS = 1800  # 30 minutes
+
+
+def _game_score(p):
+    """Game Score: PTS + REB*1.2 + AST*1.5 + STL*2 + BLK*2 - TOV*1.5 (matches frontend)"""
+    return (
+        p["PTS"] + p["REB"] * 1.2 + p["AST"] * 1.5
+        + p.get("STL", 0) * 2 + p.get("BLK", 0) * 2
+        - p.get("TOV", 0) * 1.5
+    )
 
 NBA_CDN_BASE = "https://cdn.nba.com/static/json"
 SCOREBOARD_URL = f"{NBA_CDN_BASE}/liveData/scoreboard/todaysScoreboard_00.json"
@@ -256,7 +267,7 @@ def daily_deck(date: str = Query(default=None, description="Date in YYYY-MM-DD f
     else:
         target_date = get_target_date()
 
-    cache_key = f"daily_deck_{target_date}"
+    cache_key = f"daily_deck_{target_date}_p{MAX_PLAYERS}"
     cached = _cache_get(cache_key)
     if cached is not None:
         print(f"Cache hit for {target_date}")
@@ -284,6 +295,12 @@ def daily_deck(date: str = Query(default=None, description="Date in YYYY-MM-DD f
                 player_pool.extend(future.result())
             except Exception as e:
                 print(f"Error in thread for {futures[future]}: {e}")
+
+    # Select top MAX_PLAYERS by Game Score (best performers)
+    player_pool = sorted(player_pool, key=_game_score, reverse=True)[:MAX_PLAYERS]
+
+    if len(player_pool) < MIN_PLAYERS:
+        return {"message": f"Not enough players ({len(player_pool)}). Need at least {MIN_PLAYERS}.", "pairs": []}
 
     random.shuffle(player_pool)
 
