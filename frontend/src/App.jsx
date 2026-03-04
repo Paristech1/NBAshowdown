@@ -5,7 +5,9 @@ import { MdVerified } from 'react-icons/md';
 import React from 'react';
 import './App.css';
 
-const API_BASE = '';
+const DAILY_DECK_URL = import.meta.env.PROD
+  ? '/.netlify/functions/daily-deck'
+  : '/api/daily-deck';
 const STORAGE_KEY = 'nba_showdown_state';
 
 const LEAGUE_AVG = {
@@ -296,7 +298,7 @@ function App() {
   function fetchDeck() {
     setLoading(true);
     setError(null);
-    fetch(`${API_BASE}/api/daily-deck`)
+    fetch(DAILY_DECK_URL)
       .then(res => {
         if (!res.ok) throw new Error(`API returned ${res.status}`);
         return res.json();
@@ -312,7 +314,7 @@ function App() {
   useEffect(() => {
     if (_hasSaved) return;
     let cancelled = false;
-    fetch(`${API_BASE}/api/daily-deck`)
+    fetch(DAILY_DECK_URL)
       .then(res => {
         if (!res.ok) throw new Error(`API returned ${res.status}`);
         return res.json();
