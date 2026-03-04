@@ -623,12 +623,11 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="victory-header">NBA DAILY SHOWDOWN</div>
-            <div className="victory-subheader">CONGRATULATIONS!</div>
-            <div className="victory-title">YOU WIN!</div>
+            <div className="victory-subheader">Congratulations</div>
+            <div className="victory-title">Baller Of The Day</div>
           </motion.header>
 
-          <div className="victory-card-label">PLAYER OF THE GAME</div>
+          <div className="victory-card-label">PLAYER OF THE DAY</div>
           <div className="arena" ref={winnerCardRef}>
             <VictoryWinnerCard
               player={winner}

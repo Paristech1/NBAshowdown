@@ -746,23 +746,11 @@ body {
   padding: 2rem;
 }
 
-.victory-header {
-  font-weight: 800;
-  font-size: 1.5rem;
-  letter-spacing: -0.05em;
-  background: linear-gradient(to bottom, #fff, #888);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-  text-align: center;
-  margin-bottom: 0.25rem;
-}
-
 .victory-subheader {
-  font-size: 0.9rem;
+  font-size: 1rem;
   font-weight: 600;
-  color: var(--gold);
-  letter-spacing: 0.15em;
+  color: rgba(255, 255, 255, 0.9);
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   text-align: center;
   margin-bottom: 0.5rem;
@@ -772,12 +760,11 @@ body {
   font-size: 2.5rem;
   font-weight: 900;
   letter-spacing: -0.02em;
-  background: linear-gradient(135deg, var(--gold), #f59e0b);
+  background: linear-gradient(135deg, #fde047, #fbbf24, #f59e0b);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
   text-align: center;
-  text-shadow: 0 0 30px rgba(251, 191, 36, 0.4);
   margin-bottom: 2rem;
 }
 
@@ -1077,8 +1064,8 @@ body {
     padding: 1rem 1.25rem;
   }
 
-  .victory-header {
-    font-size: 1.25rem;
+  .victory-subheader {
+    font-size: 0.9rem;
   }
 
   .victory-title {
