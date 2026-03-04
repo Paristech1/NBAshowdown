@@ -103,7 +103,7 @@ async function generateShareCard(winner, gs, deckAvg) {
 
   ctx.fillStyle = '#fbbf24';
   ctx.font = 'bold 28px sans-serif';
-  ctx.fillText('CONGRATULATIONS!', W / 2, 180);
+  ctx.fillText('BALLER OF THE NIGHT!', W / 2, 180);
 
   const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
   goldGrad.addColorStop(0, '#fbbf24');
@@ -114,7 +114,7 @@ async function generateShareCard(winner, gs, deckAvg) {
 
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.font = '24px sans-serif';
-  ctx.fillText('PLAYER OF THE GAME', W / 2, 320);
+  ctx.fillText('BALLER OF THE NIGHT', W / 2, 320);
 
   const cardX = 90;
   const cardY = 380;
@@ -623,11 +623,10 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="victory-subheader">Congratulations</div>
-            <div className="victory-title">Baller Of The Day</div>
+            <div className="victory-title">Baller of the Night</div>
           </motion.header>
 
-          <div className="victory-card-label">PLAYER OF THE DAY</div>
+          <div className="victory-card-label">BALLER OF THE NIGHT</div>
           <div className="arena" ref={winnerCardRef}>
             <VictoryWinnerCard
               player={winner}
