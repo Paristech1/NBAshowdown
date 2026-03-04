@@ -138,13 +138,15 @@ const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggl
     <motion.div
       className={`card-wrap pointer ${isWinner ? 'winner-card' : ''} ${isLoser ? 'loser-card' : ''}`}
       onClick={onClick}
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
+      initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -50, scale: 0.9 }}
+      exit={{ opacity: 0, y: -40, scale: 0.95 }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.4, ease: [0, 0, 0.25, 1] }}
-      layout
+      transition={{
+        duration: 0.28,
+        ease: [0.25, 0.1, 0.25, 1],
+      }}
     >
       <div className="card">
         <img
@@ -582,27 +584,31 @@ function App() {
       </motion.div>
 
       <div className="arena">
-        <AnimatePresence mode='popLayout'>
-          <PlayerCard
-            key={`left-${leftPlayer.PLAYER_ID}`}
-            player={leftPlayer}
-            onClick={() => handlePick('left')}
-            showFullStats={expandedLeft}
-            onToggleStats={() => setExpandedLeft(p => !p)}
-          />
-        </AnimatePresence>
+        <div className="arena-slot">
+          <AnimatePresence mode="wait">
+            <PlayerCard
+              key={`left-${leftPlayer.PLAYER_ID}`}
+              player={leftPlayer}
+              onClick={() => handlePick('left')}
+              showFullStats={expandedLeft}
+              onToggleStats={() => setExpandedLeft(p => !p)}
+            />
+          </AnimatePresence>
+        </div>
 
         <div className="vs-badge">VS</div>
 
-        <AnimatePresence mode='popLayout'>
-          <PlayerCard
-            key={`right-${rightPlayer.PLAYER_ID}`}
-            player={rightPlayer}
-            onClick={() => handlePick('right')}
-            showFullStats={expandedRight}
-            onToggleStats={() => setExpandedRight(p => !p)}
-          />
-        </AnimatePresence>
+        <div className="arena-slot">
+          <AnimatePresence mode="wait">
+            <PlayerCard
+              key={`right-${rightPlayer.PLAYER_ID}`}
+              player={rightPlayer}
+              onClick={() => handlePick('right')}
+              showFullStats={expandedRight}
+              onToggleStats={() => setExpandedRight(p => !p)}
+            />
+          </AnimatePresence>
+        </div>
       </div>
     </div>
   );
