@@ -1,4 +1,4 @@
-# 🏀 NBA Daily Showdown
+–# 🏀 NBA Daily Showdown
 
 **The ultimate daily NBA player showdown game where YOU decide who had the best performance!**
 
@@ -13,8 +13,8 @@ Think of it as "Hot or Not" meets NBA stats, with a twist of March Madness brack
 ## ✨ How It Works
 
 1. **The Setup**: We grab real box scores from recent NBA games using the official NBA API
-2. **The Showdown**: Two players face off. You pick who had the better night (based on vibes, stats, or pure bias—we don't judge!)
-3. **The Twist**: Your chosen player gets thrown BACK into the deck to potentially face off again
+2. **The Showdown**: Two players face off. You pick who had the better night (based on vibes, stats, or pure bias we don't judge!)
+3. **The Motion**: Your chosen player gets thrown BACK into the deck to potentially face off again
 4. **The Grind**: Keep picking until you've narrowed down the entire field
 5. **The Crown**: The last player standing becomes YOUR "Player of the Day" 👑
 
@@ -132,7 +132,7 @@ export ALLOWED_ORIGINS="http://localhost:5173,https://yourdomain.com"
 
 We wanted this to feel **premium**. No basic MVP vibes here. Think:
 - **Dark mode by default** (because we're not savages)
-- **Glassmorphism** (it's 2024, we fancy now)
+- **Glassmorphism** 
 - **Smooth animations** (every click should feel satisfying)
 - **Real player photos** (no placeholder silhouettes)
 - **Team logos** (rep your squad)
