@@ -99,7 +99,7 @@ async function generateShareCard(winner, gs, deckAvg) {
   ctx.fillStyle = grad1;
   ctx.font = 'bold 36px sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('NBA DAILY SHOWDOWN', W / 2, 120);
+  ctx.fillText('NBA SHOWDOWN', W / 2, 120);
 
   ctx.fillStyle = '#fbbf24';
   ctx.font = 'bold 28px sans-serif';
@@ -274,7 +274,7 @@ const LeadersPreviewCard = ({ player }) => {
       <div className="leaders-card-content">
         <div className="leaders-player-name">{player.PLAYER_NAME}</div>
         <div className="leaders-player-team">{player.TEAM_ABBREVIATION}</div>
-        <div className="leaders-player-score">{player.PTS} PTS</div>
+        <div className="leaders-player-score">{player.PTS} PTS • {player.AST} AST • {player.REB} REB</div>
       </div>
     </div>
   );
@@ -586,9 +586,8 @@ function App() {
     : 0;
 
   const topPerformers = useMemo(() => ([...allPlayers]
-    .sort((a, b) => (b.PTS - a.PTS) || a.PLAYER_NAME.localeCompare(b.PLAYER_NAME))
-    .slice(0, 5)
-    .sort((a, b) => a.PLAYER_NAME.localeCompare(b.PLAYER_NAME))), [allPlayers]);
+    .sort((a, b) => (b.PTS - a.PTS) || (b.AST - a.AST) || (b.REB - a.REB) || a.PLAYER_NAME.localeCompare(b.PLAYER_NAME))
+    .slice(0, 5)), [allPlayers]);
 
   // --- Render ---
 

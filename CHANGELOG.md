@@ -1,4 +1,4 @@
-# NBA Daily Showdown — Development Changelog
+# NBA Showdown — Development Changelog
 
 > Sprint summary for PM standup. Covers all work completed on the app from initial state to current production-ready build.
 
