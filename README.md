@@ -154,6 +154,21 @@ We wanted this to feel **premium**. No basic MVP vibes here. Think:
 - [ ] Player comparison history
 - [ ] Playoff mode with elimination brackets
 
+
+## ✅ Testing Standard
+
+This repo enforces a baseline test standard before merge/deploy. See `TEST_STANDARD.md` for full criteria.
+
+Required commands:
+```bash
+cd backend && pytest -q
+cd frontend && npm run lint
+cd frontend && npm run build
+cd frontend && npm run predeploy:security
+```
+
+For full QA/performance policy, see `QA_PERFORMANCE_PLAN.md`.
+
 ## 🤝 Contributing
 
 Got ideas? Found a bug? Want to add a feature? PRs are welcome! This is a fun project, so let's keep it fun.
