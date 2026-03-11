@@ -1,0 +1,9 @@
+SECURITY FRAMEWORK — ENFORCE ON ALL CODE, DEPLOYMENTS & CLOUD CONFIG
+
+- Never enable source maps in production builds.
+- Keep production minification enabled.
+- Do not commit .env files or hardcoded credentials.
+- Frontend must not contain secret keys.
+- Prefer explicit CORS allowlists over wildcards.
+- Add defensive headers where applicable.
+- Fail builds if production artifacts include .map files.
