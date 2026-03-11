@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
 import { FaBasketballBall, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaInstagram, FaFire } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
@@ -259,13 +259,11 @@ const VictoryWinnerCard = ({ player, gameScore, deckAvg }) => {
 };
 
 
-const LeadersPreviewCard = ({ player, rank }) => {
+const LeadersPreviewCard = ({ player }) => {
   const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
-  const gameScore = computeGameScore(player);
 
   return (
     <div className="leaders-card">
-      <div className="leaders-rank">#{rank}</div>
       <img
         src={imgUrl}
         alt={player.PLAYER_NAME}
@@ -276,7 +274,7 @@ const LeadersPreviewCard = ({ player, rank }) => {
       <div className="leaders-card-content">
         <div className="leaders-player-name">{player.PLAYER_NAME}</div>
         <div className="leaders-player-team">{player.TEAM_ABBREVIATION}</div>
-        <div className="leaders-player-score">Game Score {gameScore}</div>
+        <div className="leaders-player-score">{player.PTS} PTS</div>
       </div>
     </div>
   );
@@ -587,16 +585,17 @@ function App() {
     ? +(allPlayers.reduce((sum, p) => sum + computeGameScore(p), 0) / allPlayers.length).toFixed(1)
     : 0;
 
-  const topPerformers = [...allPlayers]
-    .sort((a, b) => computeGameScore(b) - computeGameScore(a))
-    .slice(0, 5);
+  const topPerformers = useMemo(() => ([...allPlayers]
+    .sort((a, b) => (b.PTS - a.PTS) || a.PLAYER_NAME.localeCompare(b.PLAYER_NAME))
+    .slice(0, 5)
+    .sort((a, b) => a.PLAYER_NAME.localeCompare(b.PLAYER_NAME))), [allPlayers]);
 
   // --- Render ---
 
   if (loading) return (
     <div className="container">
       <header className="header">
-        <div className="logo-text">DAILY SHOWDOWN</div>
+        <button type="button" className="logo-text logo-home-trigger" onClick={() => setScreen('home')}>NBA SHOWDOWN</button>
         <div className="subtitle">Loading today&apos;s matchups...</div>
       </header>
       <div className="arena">
@@ -620,7 +619,7 @@ function App() {
   if (!leftPlayer || !rightPlayer) return (
     <div className="container">
       <header className="header">
-        <div className="logo-text">DAILY SHOWDOWN</div>
+        <button type="button" className="logo-text logo-home-trigger" onClick={() => setScreen('home')}>NBA SHOWDOWN</button>
         <div className="subtitle">No games found today</div>
       </header>
       <button className="reset-btn" onClick={fetchDeck}>Try Again</button>
@@ -759,7 +758,7 @@ function App() {
             transition={{ duration: 0.35 }}
           >
             <header className="header">
-              <div className="logo-text">DAILY SHOWDOWN</div>
+              <button type="button" className="logo-text logo-home-trigger" onClick={() => setScreen('home')}>NBA SHOWDOWN</button>
               <div className="subtitle">Your game, your vibe</div>
             </header>
             <p className="home-hub-copy">Jump into a fresh bracket or preview tonight's hottest stat leaders.</p>
@@ -785,7 +784,7 @@ function App() {
             transition={{ duration: 0.35 }}
           >
             <header className="header">
-              <div className="logo-text">DAILY SHOWDOWN</div>
+              <button type="button" className="logo-text logo-home-trigger" onClick={() => setScreen('home')}>NBA SHOWDOWN</button>
               <div className="subtitle">Pick your favorite performance</div>
             </header>
             <motion.div
@@ -848,13 +847,13 @@ function App() {
             transition={{ duration: 0.35 }}
           >
             <header className="header">
-              <div className="logo-text">DAILY SHOWDOWN</div>
+              <button type="button" className="logo-text logo-home-trigger" onClick={() => setScreen('home')}>NBA SHOWDOWN</button>
               <div className="subtitle">Tonight's top stat leaders</div>
             </header>
             <div className="leaders-flow">
               {topPerformers.slice(0, 5).map((player, idx) => (
-                <div key={`${player.PLAYER_ID}-${idx}`} className="leaders-flow-item" style={{ '--offset': idx - 2 }}>
-                  <LeadersPreviewCard player={player} rank={idx + 1} />
+                <div key={`${player.PLAYER_ID}-${idx}`} className="leaders-flow-item">
+                  <LeadersPreviewCard player={player} />
                 </div>
               ))}
             </div>

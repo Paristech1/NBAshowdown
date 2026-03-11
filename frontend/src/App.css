@@ -68,6 +68,19 @@ body {
   justify-content: center;
 }
 
+.logo-home-trigger {
+  border: 0;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.logo-home-trigger:focus-visible {
+  outline: 2px solid rgba(251, 191, 36, 0.85);
+  outline-offset: 0.35rem;
+  border-radius: 0.4rem;
+}
+
 .subtitle {
   opacity: 0.5;
   font-size: 1rem;
@@ -153,8 +166,11 @@ body {
 }
 
 .leaders-flow-item {
-  transform: translateY(0) rotateY(calc(var(--offset) * 7deg));
   transition: transform 0.3s ease;
+}
+
+.leaders-flow-item:hover {
+  transform: translateY(-4px);
 }
 
 .leaders-card {
@@ -167,18 +183,6 @@ body {
   box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
 }
 
-.leaders-rank {
-  position: absolute;
-  top: 0.6rem;
-  left: 0.6rem;
-  z-index: 3;
-  padding: 0.2rem 0.55rem;
-  border-radius: 0.7rem;
-  font-weight: 700;
-  font-size: 0.8rem;
-  background: rgba(251, 191, 36, 0.92);
-  color: #231400;
-}
 
 .leaders-card-bg {
   position: absolute;
