@@ -76,6 +76,146 @@ body {
   margin-top: 0.5rem;
 }
 
+
+.home-hub {
+  width: min(42rem, 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.home-hub-copy {
+  max-width: 34rem;
+  margin: 0.75rem 0 1.75rem;
+  opacity: 0.72;
+  line-height: 1.55;
+}
+
+.home-hub-actions,
+.screen-panel-actions {
+  display: flex;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.hub-btn {
+  border: 1px solid transparent;
+  border-radius: 2rem;
+  font-family: inherit;
+  font-weight: 700;
+  padding: 0.7rem 1.45rem;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.hub-btn:hover {
+  transform: translateY(-1px);
+}
+
+.hub-btn-primary {
+  background: #fff;
+  color: #111;
+}
+
+.hub-btn-primary:hover {
+  box-shadow: 0 0 18px rgba(255, 255, 255, 0.35);
+}
+
+.hub-btn-secondary {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(255, 255, 255, 0.9);
+  border-color: rgba(255, 255, 255, 0.16);
+}
+
+.hub-btn-secondary:hover {
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.screen-panel {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.leaders-flow {
+  width: min(72rem, 100%);
+  margin: 1rem 0 2rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+  gap: 1rem;
+  perspective: 900px;
+}
+
+.leaders-flow-item {
+  transform: translateY(0) rotateY(calc(var(--offset) * 7deg));
+  transition: transform 0.3s ease;
+}
+
+.leaders-card {
+  position: relative;
+  min-height: 14rem;
+  border-radius: 1.3rem;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: #111;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
+}
+
+.leaders-rank {
+  position: absolute;
+  top: 0.6rem;
+  left: 0.6rem;
+  z-index: 3;
+  padding: 0.2rem 0.55rem;
+  border-radius: 0.7rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  background: rgba(251, 191, 36, 0.92);
+  color: #231400;
+}
+
+.leaders-card-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.62;
+}
+
+.leaders-card-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.88) 18%, rgba(0, 0, 0, 0.2) 70%);
+}
+
+.leaders-card-content {
+  position: absolute;
+  inset: auto 0 0;
+  z-index: 2;
+  padding: 0.8rem;
+}
+
+.leaders-player-name {
+  font-size: 0.95rem;
+  font-weight: 700;
+}
+
+.leaders-player-team,
+.leaders-player-score {
+  font-size: 0.72rem;
+  opacity: 0.8;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-top: 0.25rem;
+}
+
 /* Scoreboard */
 .scoreboard {
   display: flex;
@@ -1055,6 +1195,23 @@ body {
     padding: 0.8rem 1.5rem;
   }
 
+  .leaders-flow {
+    grid-template-columns: 1fr;
+    width: min(20rem, 100%);
+  }
+
+  .home-hub-actions,
+  .screen-panel-actions {
+    flex-direction: column;
+    width: 100%;
+  }
+
+  .hub-btn,
+  .restart-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
   .winner-stats-bar {
     gap: 1rem;
     padding: 0.6rem 1.5rem;
@@ -1120,6 +1277,10 @@ body {
   .scoreboard {
     gap: 2rem;
     padding: 0.9rem 2rem;
+  }
+
+  .leaders-flow {
+    grid-template-columns: repeat(3, minmax(10rem, 1fr));
   }
 
   .winner-stats-bar {

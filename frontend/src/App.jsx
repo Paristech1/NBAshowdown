@@ -1,6 +1,6 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
-import { FaBasketballBall, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaInstagram } from 'react-icons/fa';
+import { FaBasketballBall, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaInstagram, FaFire } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import React from 'react';
 import { parsePlayers, computeGameScore } from './lib/deckUtils';
@@ -258,6 +258,30 @@ const VictoryWinnerCard = ({ player, gameScore, deckAvg }) => {
   );
 };
 
+
+const LeadersPreviewCard = ({ player, rank }) => {
+  const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
+  const gameScore = computeGameScore(player);
+
+  return (
+    <div className="leaders-card">
+      <div className="leaders-rank">#{rank}</div>
+      <img
+        src={imgUrl}
+        alt={player.PLAYER_NAME}
+        className="leaders-card-bg"
+        onError={(e) => { e.currentTarget.src = PLACEHOLDER_SVG; }}
+      />
+      <div className="leaders-card-overlay" />
+      <div className="leaders-card-content">
+        <div className="leaders-player-name">{player.PLAYER_NAME}</div>
+        <div className="leaders-player-team">{player.TEAM_ABBREVIATION}</div>
+        <div className="leaders-player-score">Game Score {gameScore}</div>
+      </div>
+    </div>
+  );
+};
+
 // --- PlayerCard ---
 const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggleStats }) => {
   const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
@@ -404,6 +428,7 @@ function App() {
   const [expandedRight, setExpandedRight] = useState(false);
   const [matchLogExpanded, setMatchLogExpanded] = useState(false);
   const [shareImageLoading, setShareImageLoading] = useState(false);
+  const [screen, setScreen] = useState('home');
 
   const winnerCardRef = useRef(null);
 
@@ -524,6 +549,7 @@ function App() {
     setShareImageLoading(false);
     setError(null);
     setLoading(true);
+    setScreen('game');
     fetchDeck();
   }
 
@@ -560,6 +586,10 @@ function App() {
   const deckAvgScore = allPlayers.length > 0
     ? +(allPlayers.reduce((sum, p) => sum + computeGameScore(p), 0) / allPlayers.length).toFixed(1)
     : 0;
+
+  const topPerformers = [...allPlayers]
+    .sort((a, b) => computeGameScore(b) - computeGameScore(a))
+    .slice(0, 5);
 
   // --- Render ---
 
@@ -624,9 +654,9 @@ function App() {
             transition={{ duration: 0.4 }}
           >
             <div className="victory-title">Baller of the Night</div>
+            <div className="victory-subheader">One star rose above the rest tonight.</div>
           </motion.header>
 
-          <div className="victory-card-label">BALLER OF THE NIGHT</div>
           <div className="arena" ref={winnerCardRef}>
             <VictoryWinnerCard
               player={winner}
@@ -718,58 +748,124 @@ function App() {
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="logo-text">DAILY SHOWDOWN</div>
-        <div className="subtitle">Pick your favorite performance</div>
-      </header>
+      <AnimatePresence mode="wait">
+        {screen === 'home' && (
+          <motion.section
+            key="home"
+            className="home-hub"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.35 }}
+          >
+            <header className="header">
+              <div className="logo-text">DAILY SHOWDOWN</div>
+              <div className="subtitle">Your game, your vibe</div>
+            </header>
+            <p className="home-hub-copy">Jump into a fresh bracket or preview tonight's hottest stat leaders.</p>
+            <div className="home-hub-actions">
+              <button className="hub-btn hub-btn-primary" onClick={() => setScreen('game')}>
+                Fresh Game
+              </button>
+              <button className="hub-btn hub-btn-secondary" onClick={() => setScreen('leaders')}>
+                <FaFire size={14} />
+                Stat Leaders
+              </button>
+            </div>
+          </motion.section>
+        )}
 
-      <motion.div
-        className="scoreboard"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="score-item">
-          <div className="score-label">Remaining</div>
-          <div className="score-value">{deck.length}</div>
-        </div>
-        <div className="score-item">
-          <div className="score-label">Matchups</div>
-          <div className="score-value">{matchLog.length}</div>
-        </div>
-      </motion.div>
+        {screen === 'game' && (
+          <motion.section
+            key="game"
+            className="screen-panel"
+            initial={{ opacity: 0, y: 70 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -70 }}
+            transition={{ duration: 0.35 }}
+          >
+            <header className="header">
+              <div className="logo-text">DAILY SHOWDOWN</div>
+              <div className="subtitle">Pick your favorite performance</div>
+            </header>
+            <motion.div
+              className="scoreboard"
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="score-item">
+                <div className="score-label">Remaining</div>
+                <div className="score-value">{deck.length}</div>
+              </div>
+              <div className="score-item">
+                <div className="score-label">Matchups</div>
+                <div className="score-value">{matchLog.length}</div>
+              </div>
+            </motion.div>
 
-      <div className="arena">
-        <div className="arena-slot">
-          <AnimatePresence mode="wait">
-            <PlayerCard
-              key={`left-${leftPlayer.PLAYER_ID}`}
-              player={leftPlayer}
-              onClick={() => handlePick('left')}
-              showFullStats={expandedLeft}
-              onToggleStats={() => setExpandedLeft(p => !p)}
-            />
-          </AnimatePresence>
-        </div>
+            <div className="arena">
+              <div className="arena-slot">
+                <AnimatePresence mode="wait">
+                  <PlayerCard
+                    key={`left-${leftPlayer.PLAYER_ID}`}
+                    player={leftPlayer}
+                    onClick={() => handlePick('left')}
+                    showFullStats={expandedLeft}
+                    onToggleStats={() => setExpandedLeft(p => !p)}
+                  />
+                </AnimatePresence>
+              </div>
 
-        <div className="vs-badge">VS</div>
+              <div className="vs-badge">VS</div>
 
-        <div className="arena-slot">
-          <AnimatePresence mode="wait">
-            <PlayerCard
-              key={`right-${rightPlayer.PLAYER_ID}`}
-              player={rightPlayer}
-              onClick={() => handlePick('right')}
-              showFullStats={expandedRight}
-              onToggleStats={() => setExpandedRight(p => !p)}
-            />
-          </AnimatePresence>
-        </div>
-      </div>
+              <div className="arena-slot">
+                <AnimatePresence mode="wait">
+                  <PlayerCard
+                    key={`right-${rightPlayer.PLAYER_ID}`}
+                    player={rightPlayer}
+                    onClick={() => handlePick('right')}
+                    showFullStats={expandedRight}
+                    onToggleStats={() => setExpandedRight(p => !p)}
+                  />
+                </AnimatePresence>
+              </div>
+            </div>
 
-      <button className="restart-btn" onClick={resetGame}>
-        Restart
-      </button>
+            <button className="restart-btn" onClick={resetGame}>
+              Restart
+            </button>
+          </motion.section>
+        )}
+
+        {screen === 'leaders' && (
+          <motion.section
+            key="leaders"
+            className="screen-panel"
+            initial={{ opacity: 0, y: 80 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -80 }}
+            transition={{ duration: 0.35 }}
+          >
+            <header className="header">
+              <div className="logo-text">DAILY SHOWDOWN</div>
+              <div className="subtitle">Tonight's top stat leaders</div>
+            </header>
+            <div className="leaders-flow">
+              {topPerformers.slice(0, 5).map((player, idx) => (
+                <div key={`${player.PLAYER_ID}-${idx}`} className="leaders-flow-item" style={{ '--offset': idx - 2 }}>
+                  <LeadersPreviewCard player={player} rank={idx + 1} />
+                </div>
+              ))}
+            </div>
+
+            <div className="screen-panel-actions">
+              <button className="hub-btn hub-btn-primary" onClick={() => setScreen('game')}>Fresh Game</button>
+              <button className="restart-btn" onClick={() => setScreen('home')}>Back</button>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
