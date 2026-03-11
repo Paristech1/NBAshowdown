@@ -281,9 +281,10 @@ const LeadersPreviewCard = ({ player }) => {
 };
 
 // --- PlayerCard ---
-const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggleStats }) => {
+const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggleStats, variant = 'full' }) => {
   const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
   const gameScore = computeGameScore(player);
+  const isSimple = variant === 'simple';
 
   return (
     <motion.div
@@ -292,14 +293,16 @@ const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggl
       initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
       exit={{ opacity: 0, y: -40, scale: 0.95 }}
-      whileHover={{ scale: 1.02 }}
+      whileHover={{ scale: isSimple ? 1.05 : 1.02 }}
       whileTap={{ scale: 0.98 }}
       transition={{
         duration: 0.28,
         ease: [0.25, 0.1, 0.25, 1],
       }}
     >
-      <div className="card">
+      <div className={`card ${variant}`}>
+        <div className="card-holo" />
+
         <img
           src={imgUrl}
           alt={player.PLAYER_NAME}
@@ -345,15 +348,17 @@ const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggl
             </div>
           </div>
 
-          <button
-            className="toggle-stats-btn"
-            onClick={(e) => { e.stopPropagation(); onToggleStats && onToggleStats(); }}
-          >
-            {showFullStats ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
-            <span>{showFullStats ? 'Hide Stats' : 'Full Stats'}</span>
-          </button>
+          {!isSimple && (
+            <button
+              className="toggle-stats-btn"
+              onClick={(e) => { e.stopPropagation(); onToggleStats && onToggleStats(); }}
+            >
+              {showFullStats ? <FaChevronUp size={10} /> : <FaChevronDown size={10} />}
+              <span>{showFullStats ? 'Hide Stats' : 'Full Stats'}</span>
+            </button>
+          )}
 
-          {showFullStats && (
+          {showFullStats && !isSimple && (
             <motion.div
               className="full-stats"
               initial={{ height: 0, opacity: 0 }}
@@ -371,7 +376,7 @@ const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggl
             </motion.div>
           )}
 
-          {!isWinner && !isLoser && (
+          {!isWinner && !isLoser && !isSimple && (
             <div className="card-button">
               <div className="btn-text">Select Player</div>
               <div className="btn-icon">
@@ -758,7 +763,6 @@ function App() {
           >
             <header className="header">
               <button type="button" className="logo-text logo-home-trigger" onClick={() => setScreen('home')}>NBA SHOWDOWN</button>
-              <div className="subtitle">Your game, your vibe</div>
             </header>
             <p className="home-hub-copy">Jump into a fresh bracket or preview tonight's hottest stat leaders.</p>
             <div className="home-hub-actions">
@@ -852,7 +856,7 @@ function App() {
             <div className="leaders-flow">
               {topPerformers.slice(0, 5).map((player, idx) => (
                 <div key={`${player.PLAYER_ID}-${idx}`} className="leaders-flow-item">
-                  <LeadersPreviewCard player={player} />
+                  <PlayerCard player={player} variant="simple" />
                 </div>
               ))}
             </div>

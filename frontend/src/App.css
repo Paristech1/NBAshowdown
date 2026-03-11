@@ -1,14 +1,14 @@
-@import url('https://api.fontshare.com/v2/css?f[]=switzer@300,400,500,600,700,800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
 
 :root {
   --bg: #050505;
   --text: #ffffff;
   --accent: #ffffff;
   --glass: rgba(255, 255, 255, 0.08);
-  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-border: rgba(255, 255, 255, 0.12);
   --radius: 2.5rem;
-  --shadow: 0 0.4rem 1rem rgba(0, 0, 0, 0.3);
-  --anim: cubic-bezier(0, 0, 0.25, 1);
+  --shadow: 0 1rem 3rem rgba(0, 0, 0, 0.5);
+  --anim: cubic-bezier(0.16, 1, 0.3, 1);
 
   --bp-mobile: 599px;
   --bp-tablet: 1023px;
@@ -22,7 +22,8 @@
   box-sizing: border-box;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-family: "Switzer", sans-serif;
+  font-family: "Outfit", sans-serif;
+  letter-spacing: -0.01em;
 }
 
 body {
@@ -60,19 +61,24 @@ body {
   font-weight: 800;
   font-size: 3rem;
   letter-spacing: -0.05em;
-  background: linear-gradient(to bottom, #fff, #888);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: #fbbf24;
   display: flex;
   align-items: center;
   justify-content: center;
+  text-decoration: none;
 }
 
 .logo-home-trigger {
   border: 0;
   padding: 0;
-  background: transparent;
+  background: transparent !important;
+  background-image: none !important;
   cursor: pointer;
+  color: #fbbf24;
+  font-weight: 800;
+  font-size: 3rem;
+  letter-spacing: -0.05em;
+  -webkit-text-fill-color: #fbbf24 !important;
 }
 
 .logo-home-trigger:focus-visible {
@@ -157,11 +163,12 @@ body {
 }
 
 .leaders-flow {
-  width: min(72rem, 100%);
+  width: min(90rem, 100%);
   margin: 1rem 0 2rem;
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
-  gap: 1rem;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
   perspective: 900px;
 }
 
@@ -299,8 +306,35 @@ body {
   border-radius: var(--radius);
   box-shadow: var(--shadow);
   position: relative;
-  background: #111;
-  transition: all 0.4s var(--anim);
+  background: #0d0d0d;
+  transition: all 0.5s var(--anim);
+}
+
+.card-holo {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  background: radial-gradient(
+    circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(255, 255, 255, 0.08) 0%,
+    rgba(251, 191, 36, 0.03) 25%,
+    transparent 50%
+  );
+  opacity: 0.6;
+  mix-blend-mode: overlay;
+  transition: opacity 0.5s ease;
+}
+
+.card:hover .card-holo {
+  opacity: 1;
+  animation: holo-shimmer 4s infinite linear;
+}
+
+@keyframes holo-shimmer {
+  0% { transform: translateY(-10%) rotate(0deg); }
+  50% { transform: translateY(10%) rotate(5deg); }
+  100% { transform: translateY(-10%) rotate(0deg); }
 }
 
 .card-bg {
@@ -322,8 +356,46 @@ body {
 .card-filter {
   position: absolute;
   inset: 0;
-  background: linear-gradient(to top, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.2) 50%, rgba(0, 0, 0, 0.4) 100%);
-  z-index: 1;
+  background: linear-gradient(
+    to top,
+    rgba(0, 0, 0, 0.95) 0%,
+    rgba(0, 0, 0, 0.4) 40%,
+    rgba(0, 0, 0, 0.2) 70%,
+    rgba(0, 0, 0, 0.4) 100%
+  );
+  z-index: 2;
+}
+
+.card.simple {
+  min-height: 24rem;
+  width: 18rem;
+  padding: 1.25rem;
+  border-radius: 2rem;
+}
+
+.card.simple .card-name {
+  font-size: 1.3rem;
+}
+
+.card.simple .stat-pill {
+  padding: 0.3rem 0.4rem;
+  min-width: 2.5rem;
+}
+
+.card.simple .stat-value {
+  font-size: 0.85rem;
+}
+
+.card.simple .game-score-badge {
+  top: 1.25rem;
+  right: 1.25rem;
+  padding: 0.4rem 0.6rem;
+}
+
+.card.simple .card-status {
+  top: 1.25rem;
+  left: 1.25rem;
+  padding: 0.3rem 0.6rem;
 }
 
 /* Status Badge */
