@@ -623,10 +623,9 @@ function App() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
           >
-            <div className="victory-title">Baller of the Night</div>
+            <div className="victory-title">Baller of the Night — The Court&apos;s Ultimate Closer</div>
           </motion.header>
 
-          <div className="victory-card-label">BALLER OF THE NIGHT</div>
           <div className="arena" ref={winnerCardRef}>
             <VictoryWinnerCard
               player={winner}
