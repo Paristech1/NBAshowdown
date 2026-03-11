@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Cormorant+Garamond:ital,wght@1,600;1,700&display=swap');
 
 :root {
   --bg: #050505;
@@ -58,14 +58,17 @@ body {
 }
 
 .logo-text {
-  font-weight: 800;
-  font-size: 3rem;
-  letter-spacing: -0.05em;
-  color: #fbbf24;
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 4.5rem;
+  letter-spacing: -0.02em;
+  color: #ececec;
   display: flex;
   align-items: center;
   justify-content: center;
   text-decoration: none;
+  text-transform: none;
 }
 
 .logo-home-trigger {
@@ -74,11 +77,14 @@ body {
   background: transparent !important;
   background-image: none !important;
   cursor: pointer;
-  color: #fbbf24;
-  font-weight: 800;
-  font-size: 3rem;
-  letter-spacing: -0.05em;
-  -webkit-text-fill-color: #fbbf24 !important;
+  color: #ececec;
+  font-family: "Cormorant Garamond", serif;
+  font-style: italic;
+  font-weight: 700;
+  font-size: 4.5rem;
+  letter-spacing: -0.02em;
+  -webkit-text-fill-color: #ececec !important;
+  text-transform: none;
 }
 
 .logo-home-trigger:focus-visible {
