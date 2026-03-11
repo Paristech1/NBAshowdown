@@ -1,12 +1,12 @@
-–# 🏀 NBA Daily Showdown
+# 🏀 NBA Showdown
 
 **The ultimate daily NBA player showdown game where YOU decide who had the best performance!**
 
-![NBA Daily Showdown Gameplay](screenshots/gameplay.png)
+![NBA Showdown Gameplay](screenshots/gameplay.png)
 
 ## 🎮 What Is This?
 
-Ever argue with your friends about who had the better game? Well, now you can settle it yourself! NBA Daily Showdown is a fast-paced, addictive game that lets you compare real NBA player performances from recent games and pick your favorites until only one remains standing.
+Ever argue with your friends about who had the better game? Well, now you can settle it yourself! NBA Showdown is a fast-paced, addictive game that lets you compare real NBA player performances from recent games and pick your favorites until only one remains standing.
 
 Think of it as "Hot or Not" meets NBA stats, with a twist of March Madness bracket energy. 🔥
 

@@ -11,7 +11,7 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['vite.svg'],
       manifest: {
-        name: 'NBA Daily Showdown',
+        name: 'NBA Showdown',
         short_name: 'NBA Showdown',
         description: 'The ultimate daily NBA player showdown game',
         theme_color: '#050505',
