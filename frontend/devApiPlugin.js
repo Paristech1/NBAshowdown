@@ -225,6 +225,7 @@ async function handleDailyDeck(url) {
         .map((p) => ({ ...p, _gs: gameScore(p) }))
         .sort((a, b) => b._gs - a._gs)
         .slice(0, MAX_PLAYERS)
+        // eslint-disable-next-line no-unused-vars
         .map(({ _gs, ...p }) => p);
 
     if (ranked.length < MIN_PLAYERS) {
