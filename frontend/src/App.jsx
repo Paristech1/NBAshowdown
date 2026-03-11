@@ -1,27 +1,20 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
-import { FaBasketballBall, FaTrophy, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaRedditAlien, FaInstagram, FaDownload } from 'react-icons/fa';
+import { FaBasketballBall, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaInstagram, FaFire } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import React from 'react';
+import { parsePlayers, computeGameScore } from './lib/deckUtils';
+import { fetchDailyDeck } from './lib/fetchDeck';
 import './App.css';
 
-const API_BASE = 'http://localhost:8000';
+const DAILY_DECK_URL = import.meta.env.PROD
+  ? '/.netlify/functions/daily-deck'
+  : '/api/daily-deck';
 const STORAGE_KEY = 'nba_showdown_state';
 
 const LEAGUE_AVG = {
   PTS: 15, REB: 5, AST: 5, STL: 1, BLK: 0.5, PLUS_MINUS: 0,
 };
-
-function computeGameScore(p) {
-  return +(
-    p.PTS +
-    p.REB * 1.2 +
-    p.AST * 1.5 +
-    p.STL * 2 +
-    p.BLK * 2 -
-    p.TOV * 1.5
-  ).toFixed(1);
-}
 
 function statColor(key, val) {
   const avg = LEAGUE_AVG[key];
@@ -46,86 +39,248 @@ function clearStorage() {
   localStorage.removeItem(STORAGE_KEY);
 }
 
-function parsePlayers(data) {
-  const players = [];
-  if (Array.isArray(data)) {
-    data.forEach(pair => {
-      if (pair.player_left) players.push(pair.player_left);
-      if (pair.player_right) players.push(pair.player_right);
-    });
-  }
-  return players;
-}
-
 const PLACEHOLDER_SVG = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1040 760' fill='%23333'%3E%3Crect width='1040' height='760' fill='%23222'/%3E%3Ccircle cx='520' cy='280' r='140' fill='%23444'/%3E%3Cellipse cx='520' cy='600' rx='220' ry='180' fill='%23444'/%3E%3C/svg%3E";
 
 function buildShareText(winner, gs) {
-  return `🏀 My NBA Showdown Player of the Day: ${winner.PLAYER_NAME} (${winner.TEAM_ABBREVIATION}) with a Game Score of ${gs}! #NBAShowdown`;
+  return `🏀 My NBA Showdown Player of the Game: ${winner.PLAYER_NAME} (${winner.TEAM_ABBREVIATION}) with a Game Score of ${gs}! #NBAShowdown`;
 }
 
-function generateShareCard(winner, gs, deckAvg) {
+function loadImage(url) {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error('Failed to load image'));
+    img.src = url;
+  });
+}
+
+async function generateShareCard(winner, gs, deckAvg) {
+  const W = 1080;
+  const H = 1920;
   const canvas = document.createElement('canvas');
-  canvas.width = 1080;
-  canvas.height = 1080;
+  canvas.width = W;
+  canvas.height = H;
   const ctx = canvas.getContext('2d');
 
   ctx.fillStyle = '#050505';
-  ctx.fillRect(0, 0, 1080, 1080);
+  ctx.fillRect(0, 0, W, H);
 
-  const grd = ctx.createLinearGradient(0, 600, 0, 1080);
+  const radialGrad = ctx.createRadialGradient(W / 2, H * 0.4, 0, W / 2, H * 0.4, W * 0.8);
+  radialGrad.addColorStop(0, 'rgba(251, 191, 36, 0.15)');
+  radialGrad.addColorStop(1, 'transparent');
+  ctx.fillStyle = radialGrad;
+  ctx.fillRect(0, 0, W, H);
+
+  ctx.fillStyle = 'rgba(0,0,0,0.4)';
+  ctx.fillRect(0, 0, W, H);
+
+  let img = null;
+  try {
+    img = await loadImage(`https://cdn.nba.com/headshots/nba/latest/1040x760/${winner.PLAYER_ID}.png`);
+  } catch {
+    img = null;
+  }
+
+  const grd = ctx.createLinearGradient(0, H * 0.5, 0, H);
   grd.addColorStop(0, 'rgba(251, 191, 36, 0.0)');
-  grd.addColorStop(1, 'rgba(251, 191, 36, 0.15)');
+  grd.addColorStop(1, 'rgba(251, 191, 36, 0.12)');
   ctx.fillStyle = grd;
-  ctx.fillRect(0, 0, 1080, 1080);
+  ctx.fillRect(0, 0, W, H);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.05)';
+  ctx.fillStyle = 'rgba(255,255,255,0.04)';
   ctx.beginPath();
-  ctx.arc(540, 540, 300, 0, Math.PI * 2);
+  ctx.arc(W / 2, H * 0.5, 400, 0, Math.PI * 2);
   ctx.fill();
+
+  const grad1 = ctx.createLinearGradient(0, 0, 0, 100);
+  grad1.addColorStop(0, '#fff');
+  grad1.addColorStop(1, '#888');
+  ctx.fillStyle = grad1;
+  ctx.font = 'bold 36px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('NBA DAILY SHOWDOWN', W / 2, 120);
 
   ctx.fillStyle = '#fbbf24';
   ctx.font = 'bold 28px sans-serif';
-  ctx.textAlign = 'center';
-  ctx.fillText('🏀  NBA DAILY SHOWDOWN  🏀', 540, 80);
+  ctx.fillText('BALLER OF THE NIGHT!', W / 2, 180);
 
-  ctx.fillStyle = 'rgba(255,255,255,0.4)';
-  ctx.font = '20px sans-serif';
-  ctx.fillText('PLAYER OF THE DAY', 540, 120);
-
-  ctx.fillStyle = '#ffffff';
-  ctx.font = 'bold 64px sans-serif';
-  ctx.fillText(winner.PLAYER_NAME, 540, 440);
-
-  ctx.fillStyle = 'rgba(255,255,255,0.6)';
-  ctx.font = '32px sans-serif';
-  ctx.fillText(winner.TEAM_ABBREVIATION, 540, 490);
-
-  ctx.fillStyle = '#fbbf24';
-  ctx.font = 'bold 120px sans-serif';
-  ctx.fillText(gs, 540, 650);
+  const goldGrad = ctx.createLinearGradient(0, 0, W, 0);
+  goldGrad.addColorStop(0, '#fbbf24');
+  goldGrad.addColorStop(1, '#f59e0b');
+  ctx.fillStyle = goldGrad;
+  ctx.font = 'bold 72px sans-serif';
+  ctx.fillText('YOU WIN!', W / 2, 260);
 
   ctx.fillStyle = 'rgba(255,255,255,0.5)';
   ctx.font = '24px sans-serif';
-  ctx.fillText('GAME SCORE', 540, 690);
+  ctx.fillText('BALLER OF THE NIGHT', W / 2, 320);
 
-  const stats = `${winner.PTS} PTS  •  ${winner.REB} REB  •  ${winner.AST} AST  •  ${winner.STL} STL  •  ${winner.BLK} BLK`;
-  ctx.fillStyle = 'rgba(255,255,255,0.7)';
+  const cardX = 90;
+  const cardY = 380;
+  const cardW = W - 180;
+  const cardH = 900;
+  const radius = 40;
+
+  function drawRoundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    if (ctx.roundRect) {
+      ctx.roundRect(x, y, w, h, r);
+    } else {
+      ctx.moveTo(x + r, y);
+      ctx.lineTo(x + w - r, y);
+      ctx.arcTo(x + w, y, x + w, y + r, r);
+      ctx.lineTo(x + w, y + h - r);
+      ctx.arcTo(x + w, y + h, x + w - r, y + h, r);
+      ctx.lineTo(x + r, y + h);
+      ctx.arcTo(x, y + h, x, y + h - r, r);
+      ctx.lineTo(x, y + r);
+      ctx.arcTo(x, y, x + r, y, r);
+      ctx.closePath();
+    }
+  }
+
+  ctx.fillStyle = 'rgba(255,255,255,0.08)';
+  drawRoundRect(cardX, cardY, cardW, cardH, radius);
+  ctx.fill();
+  ctx.strokeStyle = 'rgba(251, 191, 36, 0.3)';
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  if (img) {
+    ctx.save();
+    drawRoundRect(cardX + 20, cardY + 80, cardW - 40, 420, 20);
+    ctx.clip();
+    ctx.globalAlpha = 0.7;
+    ctx.drawImage(img, cardX + 20, cardY + 80, cardW - 40, 420);
+    ctx.globalAlpha = 1;
+    ctx.restore();
+  }
+
+  const badgeY = cardY + 52;
+  const badgeFont = 'bold 20px sans-serif';
+  ctx.fillStyle = '#22c55e';
+  ctx.beginPath();
+  ctx.arc(cardX + 45, badgeY, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#fff';
+  ctx.font = badgeFont;
+  ctx.textAlign = 'left';
+  ctx.fillText('WINNER', cardX + 58, badgeY + 7);
+
+  ctx.fillStyle = '#fbbf24';
+  ctx.font = badgeFont;
+  ctx.textAlign = 'right';
+  ctx.fillText(`G. SCORE: ${gs}`, cardX + cardW - 25, badgeY + 7);
+
+  ctx.fillStyle = '#ffffff';
+  ctx.font = 'bold 48px sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText(winner.PLAYER_NAME, W / 2, cardY + 560);
+
+  const stats = `${winner.PTS} PTS • ${winner.REB} REB • ${winner.AST} AST • ${winner.STL} STL`;
+  ctx.fillStyle = 'rgba(255,255,255,0.85)';
   ctx.font = '26px sans-serif';
-  ctx.fillText(stats, 540, 770);
+  ctx.fillText(stats, W / 2, cardY + 620);
 
   const diff = (gs - deckAvg).toFixed(1);
   const diffStr = gs > deckAvg ? `+${diff}` : diff;
-  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  const deckBefore = `Deck Avg: ${deckAvg} | `;
+  const deckAfter = ` vs Avg: ${deckAvg}`;
   ctx.font = '22px sans-serif';
-  ctx.fillText(`Deck Avg: ${deckAvg}  |  vs Avg: ${diffStr}`, 540, 820);
+  ctx.textAlign = 'left';
+  const deckFullWidth = ctx.measureText(deckBefore + diffStr + deckAfter).width;
+  let deckX = (W - deckFullWidth) / 2;
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText(deckBefore, deckX, cardY + 680);
+  deckX += ctx.measureText(deckBefore).width;
+  ctx.fillStyle = gs > deckAvg ? '#22c55e' : 'rgba(255,255,255,0.5)';
+  ctx.fillText(diffStr, deckX, cardY + 680);
+  deckX += ctx.measureText(diffStr).width;
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.fillText(deckAfter, deckX, cardY + 680);
 
   ctx.fillStyle = 'rgba(255,255,255,0.25)';
   ctx.font = '18px sans-serif';
-  ctx.fillText(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), 540, 1000);
-  ctx.fillText('nbashowdown.app', 540, 1030);
+  ctx.fillText(new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }), W / 2, H - 80);
+  ctx.fillText('nbashowdown.app', W / 2, H - 40);
 
   return canvas;
 }
+
+// --- VictoryWinnerCard ---
+const VictoryWinnerCard = ({ player, gameScore, deckAvg }) => {
+  const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
+  const diff = (gameScore - deckAvg).toFixed(1);
+  const diffStr = gameScore > deckAvg ? `+${diff}` : diff;
+  const stats = `${player.PTS} PTS • ${player.REB} REB • ${player.AST} AST • ${player.STL} STL`;
+
+  return (
+    <motion.div
+      className="victory-winner-card"
+      initial={{ opacity: 0, y: 40, scale: 0.95 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.4, ease: [0.25, 0.1, 0.25, 1] }}
+    >
+      <img
+        src={imgUrl}
+        alt={player.PLAYER_NAME}
+        className="victory-card-bg"
+        onError={(e) => { e.currentTarget.src = PLACEHOLDER_SVG; }}
+      />
+      <div className="victory-card-filter" />
+      <div className="victory-card-glow" />
+
+      <div className="victory-badge-winner">
+        <div className="victory-badge-winner-dot" />
+        <span className="victory-badge-winner-text">WINNER</span>
+      </div>
+      <div className="victory-badge-gscore">
+        <span className="victory-badge-gscore-text">G. SCORE: {gameScore}</span>
+      </div>
+
+      <div className="victory-card-body">
+        <div className="victory-player-img-wrap">
+          <img
+            src={imgUrl}
+            alt={player.PLAYER_NAME}
+            className="victory-player-img"
+            onError={(e) => { e.currentTarget.src = PLACEHOLDER_SVG; }}
+          />
+        </div>
+        <div className="victory-player-name">{player.PLAYER_NAME}</div>
+        <div className="victory-stat-pill">{stats}</div>
+        <div className="victory-deck-comparison">
+          Deck Avg: {deckAvg} | <span className={gameScore > deckAvg ? 'vs-diff' : ''}>{diffStr}</span> vs Avg: {deckAvg}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+
+const LeadersPreviewCard = ({ player, rank }) => {
+  const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
+  const gameScore = computeGameScore(player);
+
+  return (
+    <div className="leaders-card">
+      <div className="leaders-rank">#{rank}</div>
+      <img
+        src={imgUrl}
+        alt={player.PLAYER_NAME}
+        className="leaders-card-bg"
+        onError={(e) => { e.currentTarget.src = PLACEHOLDER_SVG; }}
+      />
+      <div className="leaders-card-overlay" />
+      <div className="leaders-card-content">
+        <div className="leaders-player-name">{player.PLAYER_NAME}</div>
+        <div className="leaders-player-team">{player.TEAM_ABBREVIATION}</div>
+        <div className="leaders-player-score">Game Score {gameScore}</div>
+      </div>
+    </div>
+  );
+};
 
 // --- PlayerCard ---
 const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggleStats }) => {
@@ -136,13 +291,15 @@ const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggl
     <motion.div
       className={`card-wrap pointer ${isWinner ? 'winner-card' : ''} ${isLoser ? 'loser-card' : ''}`}
       onClick={onClick}
-      initial={{ opacity: 0, y: 50, scale: 0.9 }}
+      initial={{ opacity: 0, y: 40, scale: 0.95 }}
       animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -50, scale: 0.9 }}
+      exit={{ opacity: 0, y: -40, scale: 0.95 }}
       whileHover={{ scale: 1.02 }}
       whileTap={{ scale: 0.98 }}
-      transition={{ duration: 0.4, ease: [0, 0, 0.25, 1] }}
-      layout
+      transition={{
+        duration: 0.28,
+        ease: [0.25, 0.1, 0.25, 1],
+      }}
     >
       <div className="card">
         <img
@@ -269,17 +426,34 @@ function App() {
   const [matchLog, setMatchLog] = useState(() => _hasSaved ? (_saved.matchLog || []) : []);
   const [expandedLeft, setExpandedLeft] = useState(false);
   const [expandedRight, setExpandedRight] = useState(false);
+  const [matchLogExpanded, setMatchLogExpanded] = useState(false);
+  const [shareImageLoading, setShareImageLoading] = useState(false);
+  const [screen, setScreen] = useState('home');
 
   const winnerCardRef = useRef(null);
 
+  const PARTICLE_POSITIONS = [
+    { left: '10%', top: '20%', delay: 0 },
+    { left: '85%', top: '15%', delay: 0.5 },
+    { left: '50%', top: '30%', delay: 1 },
+    { left: '25%', top: '60%', delay: 1.5 },
+    { left: '70%', top: '55%', delay: 2 },
+    { left: '15%', top: '80%', delay: 0.8 },
+    { left: '90%', top: '75%', delay: 1.2 },
+    { left: '45%', top: '85%', delay: 2.5 },
+  ];
+
   function applyFetchedData(data) {
     const players = parsePlayers(data);
-    if (players.length < 2) {
+    if (players.length < 2 || !players[0] || !players[1]) {
       setAllPlayers([]);
       setDeck([]);
       setLeftPlayer(null);
       setRightPlayer(null);
+      setWinner(null);
+      setMatchLog([]);
       setLoading(false);
+      clearStorage();
       return;
     }
     setAllPlayers(players);
@@ -296,11 +470,7 @@ function App() {
   function fetchDeck() {
     setLoading(true);
     setError(null);
-    fetch(`${API_BASE}/api/daily-deck`)
-      .then(res => {
-        if (!res.ok) throw new Error(`API returned ${res.status}`);
-        return res.json();
-      })
+    fetchDailyDeck(DAILY_DECK_URL)
       .then(applyFetchedData)
       .catch(err => {
         console.error(err);
@@ -312,11 +482,7 @@ function App() {
   useEffect(() => {
     if (_hasSaved) return;
     let cancelled = false;
-    fetch(`${API_BASE}/api/daily-deck`)
-      .then(res => {
-        if (!res.ok) throw new Error(`API returned ${res.status}`);
-        return res.json();
-      })
+    fetchDailyDeck(DAILY_DECK_URL)
       .then(data => {
         if (!cancelled) applyFetchedData(data);
       })
@@ -338,9 +504,9 @@ function App() {
 
   function handlePick(side) {
     if (winner) return;
-
     const selected = side === 'left' ? leftPlayer : rightPlayer;
     const eliminated = side === 'left' ? rightPlayer : leftPlayer;
+    if (!selected || !eliminated) return;
 
     const newLog = [...matchLog, {
       winner: selected.PLAYER_NAME,
@@ -371,10 +537,19 @@ function App() {
 
   function resetGame() {
     clearStorage();
+    setAllPlayers([]);
+    setDeck([]);
+    setLeftPlayer(null);
+    setRightPlayer(null);
     setWinner(null);
     setMatchLog([]);
+    setMatchLogExpanded(false);
     setExpandedLeft(false);
     setExpandedRight(false);
+    setShareImageLoading(false);
+    setError(null);
+    setLoading(true);
+    setScreen('game');
     fetchDeck();
   }
 
@@ -391,27 +566,30 @@ function App() {
     window.open(`https://www.facebook.com/sharer/sharer.php?quote=${encodeURIComponent(text)}`, '_blank', 'width=600,height=400');
   }
 
-  function shareToReddit() {
-    if (!winner) return;
-    const gs = computeGameScore(winner);
-    const title = `My NBA Showdown Player of the Day: ${winner.PLAYER_NAME} (${winner.TEAM_ABBREVIATION}) — Game Score ${gs}`;
-    const text = buildShareText(winner, gs);
-    window.open(`https://www.reddit.com/submit?title=${encodeURIComponent(title)}&selftext=true&text=${encodeURIComponent(text)}`, '_blank', 'width=800,height=600');
-  }
-
-  function downloadForInstagram() {
-    if (!winner) return;
-    const gs = computeGameScore(winner);
-    const canvas = generateShareCard(winner, gs, deckAvgScore);
-    const link = document.createElement('a');
-    link.download = `nba_showdown_${winner.PLAYER_NAME.replace(/\s+/g, '_')}.png`;
-    link.href = canvas.toDataURL('image/png');
-    link.click();
+  async function downloadForInstagram() {
+    if (!winner || shareImageLoading) return;
+    setShareImageLoading(true);
+    try {
+      const gs = computeGameScore(winner);
+      const canvas = await generateShareCard(winner, gs, deckAvgScore);
+      const link = document.createElement('a');
+      link.download = `nba_showdown_${winner.PLAYER_NAME.replace(/\s+/g, '_')}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    } catch (err) {
+      console.error('Share card generation failed:', err);
+    } finally {
+      setShareImageLoading(false);
+    }
   }
 
   const deckAvgScore = allPlayers.length > 0
     ? +(allPlayers.reduce((sum, p) => sum + computeGameScore(p), 0) / allPlayers.length).toFixed(1)
     : 0;
+
+  const topPerformers = [...allPlayers]
+    .sort((a, b) => computeGameScore(b) - computeGameScore(a))
+    .slice(0, 5);
 
   // --- Render ---
 
@@ -454,154 +632,240 @@ function App() {
     const winnerMatchups = matchLog.filter(m => m.winnerId === winner.PLAYER_ID);
 
     return (
-      <div className="container">
-        <header className="header">
-          <div className="logo-text">
-            <FaTrophy style={{ marginRight: '0.5rem', color: '#fbbf24' }} />
-            PLAYER OF THE DAY
-          </div>
-          <div className="subtitle">Your top pick</div>
-        </header>
-
-        <div className="winner-stats-bar">
-          <div className="ws-item">
-            <span className="ws-label">Game Score</span>
-            <span className="ws-value accent">{winnerScore}</span>
-          </div>
-          <div className="ws-item">
-            <span className="ws-label">Deck Avg</span>
-            <span className="ws-value">{deckAvgScore}</span>
-          </div>
-          <div className="ws-item">
-            <span className="ws-label">vs Avg</span>
-            <span className={`ws-value ${winnerScore > deckAvgScore ? 'stat-green' : 'stat-red'}`}>
-              {winnerScore > deckAvgScore ? '+' : ''}{(winnerScore - deckAvgScore).toFixed(1)}
-            </span>
-          </div>
+      <div className="victory-screen">
+        <div className="victory-particles">
+          {PARTICLE_POSITIONS.map((p, i) => (
+            <div
+              key={i}
+              className="victory-particle"
+              style={{
+                left: p.left,
+                top: p.top,
+                animationDelay: `${p.delay}s`,
+              }}
+            />
+          ))}
         </div>
+        <div className="victory-content container">
+          <motion.header
+            className="header"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.4 }}
+          >
+            <div className="victory-title">Baller of the Night</div>
+            <div className="victory-subheader">One star rose above the rest tonight.</div>
+          </motion.header>
 
-        <div className="arena" ref={winnerCardRef}>
-          <PlayerCard
-            player={winner}
-            isWinner={true}
-            showFullStats={expandedLeft}
-            onToggleStats={() => setExpandedLeft(p => !p)}
-          />
-        </div>
+          <div className="arena" ref={winnerCardRef}>
+            <VictoryWinnerCard
+              player={winner}
+              gameScore={winnerScore}
+              deckAvg={deckAvgScore}
+            />
+          </div>
 
-        {winnerMatchups.length > 0 && (
+          {winnerMatchups.length > 0 && (
+            <div className="match-log-wrapper">
+              <button
+                type="button"
+                className="match-log-toggle"
+                onClick={() => setMatchLogExpanded(prev => !prev)}
+                aria-expanded={matchLogExpanded}
+              >
+                <FaHistory size={14} />
+                {matchLogExpanded ? 'Hide Path to Victory' : 'Show Path to Victory'}
+              </button>
+              <div
+                className={`match-log-collapsible ${matchLogExpanded ? 'expanded' : ''}`}
+                aria-hidden={!matchLogExpanded}
+              >
+                <div className="match-log">
+                  <h3 className="log-title"><FaHistory size={14} /> Path to Victory</h3>
+                  <div className="log-chain">
+                    {winnerMatchups.map((m, i) => (
+                      <div key={i} className="log-entry">
+                        <span className="log-winner">{m.winner}</span>
+                        <span className="log-score">{m.winnerScore}</span>
+                        <span className="log-vs">beat</span>
+                        <span className="log-loser">{m.loser}</span>
+                        <span className="log-score dim">{m.loserScore}</span>
+                        {i < winnerMatchups.length - 1 && <span className="log-arrow">→</span>}
+                      </div>
+                    ))}
+                    <div className="log-entry log-crown">
+                      <span>👑 WINNER</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
           <motion.div
-            className="match-log"
+            className="share-section"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
           >
-            <h3 className="log-title"><FaHistory size={14} /> Path to Victory</h3>
-            <div className="log-chain">
-              {winnerMatchups.map((m, i) => (
-                <div key={i} className="log-entry">
-                  <span className="log-winner">{m.winner}</span>
-                  <span className="log-score">{m.winnerScore}</span>
-                  <span className="log-vs">beat</span>
-                  <span className="log-loser">{m.loser}</span>
-                  <span className="log-score dim">{m.loserScore}</span>
-                  {i < winnerMatchups.length - 1 && <span className="log-arrow">→</span>}
-                </div>
-              ))}
-              <div className="log-entry log-crown">
-                <span>👑 WINNER</span>
-              </div>
+            <div className="share-label">Share your pick</div>
+            <div className="share-bar">
+              <button className="share-btn twitter" onClick={shareToTwitter} title="Share on X / Twitter">
+                <FaTwitter size={18} />
+                <span>Twitter</span>
+              </button>
+              <button className="share-btn facebook" onClick={shareToFacebook} title="Share on Facebook">
+                <FaFacebookF size={18} />
+                <span>Facebook</span>
+              </button>
+              <button
+                className="share-btn instagram"
+                onClick={downloadForInstagram}
+                disabled={shareImageLoading}
+                title="Download image for Instagram"
+              >
+                <FaInstagram size={18} />
+                <span>{shareImageLoading ? 'Generating...' : 'Instagram'}</span>
+              </button>
             </div>
+            <div className="share-hint">Instagram: downloads a share card you can post to your story or feed</div>
           </motion.div>
-        )}
 
-        <motion.div
-          className="share-section"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.8 }}
-        >
-          <div className="share-label">Share your pick</div>
-          <div className="share-bar">
-            <button className="share-btn twitter" onClick={shareToTwitter} title="Share on X / Twitter">
-              <FaTwitter size={18} />
-              <span>Twitter</span>
-            </button>
-            <button className="share-btn facebook" onClick={shareToFacebook} title="Share on Facebook">
-              <FaFacebookF size={18} />
-              <span>Facebook</span>
-            </button>
-            <button className="share-btn reddit" onClick={shareToReddit} title="Share on Reddit">
-              <FaRedditAlien size={18} />
-              <span>Reddit</span>
-            </button>
-            <button className="share-btn instagram" onClick={downloadForInstagram} title="Download image for Instagram">
-              <FaInstagram size={18} />
-              <span>Instagram</span>
-            </button>
-          </div>
-          <div className="share-hint">Instagram: downloads a share card you can post to your story or feed</div>
-        </motion.div>
-
-        <motion.button
-          className="reset-btn"
-          onClick={resetGame}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 1.0 }}
-        >
-          Play Again
-        </motion.button>
+          <motion.button
+            type="button"
+            className="victory-btn-primary victory-cta-single"
+            onClick={resetGame}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+          >
+            PLAY AGAIN
+          </motion.button>
+        </div>
       </div>
     );
   }
 
   return (
     <div className="container">
-      <header className="header">
-        <div className="logo-text">DAILY SHOWDOWN</div>
-        <div className="subtitle">Pick your favorite performance</div>
-      </header>
+      <AnimatePresence mode="wait">
+        {screen === 'home' && (
+          <motion.section
+            key="home"
+            className="home-hub"
+            initial={{ opacity: 0, y: 50 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -50 }}
+            transition={{ duration: 0.35 }}
+          >
+            <header className="header">
+              <div className="logo-text">DAILY SHOWDOWN</div>
+              <div className="subtitle">Your game, your vibe</div>
+            </header>
+            <p className="home-hub-copy">Jump into a fresh bracket or preview tonight's hottest stat leaders.</p>
+            <div className="home-hub-actions">
+              <button className="hub-btn hub-btn-primary" onClick={() => setScreen('game')}>
+                Fresh Game
+              </button>
+              <button className="hub-btn hub-btn-secondary" onClick={() => setScreen('leaders')}>
+                <FaFire size={14} />
+                Stat Leaders
+              </button>
+            </div>
+          </motion.section>
+        )}
 
-      <motion.div
-        className="scoreboard"
-        initial={{ y: -50, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.2 }}
-      >
-        <div className="score-item">
-          <div className="score-label">Remaining</div>
-          <div className="score-value">{deck.length}</div>
-        </div>
-        <div className="score-item">
-          <div className="score-label">Matchups</div>
-          <div className="score-value">{matchLog.length}</div>
-        </div>
-      </motion.div>
+        {screen === 'game' && (
+          <motion.section
+            key="game"
+            className="screen-panel"
+            initial={{ opacity: 0, y: 70 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -70 }}
+            transition={{ duration: 0.35 }}
+          >
+            <header className="header">
+              <div className="logo-text">DAILY SHOWDOWN</div>
+              <div className="subtitle">Pick your favorite performance</div>
+            </header>
+            <motion.div
+              className="scoreboard"
+              initial={{ y: -50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+            >
+              <div className="score-item">
+                <div className="score-label">Remaining</div>
+                <div className="score-value">{deck.length}</div>
+              </div>
+              <div className="score-item">
+                <div className="score-label">Matchups</div>
+                <div className="score-value">{matchLog.length}</div>
+              </div>
+            </motion.div>
 
-      <div className="arena">
-        <AnimatePresence mode='popLayout'>
-          <PlayerCard
-            key={`left-${leftPlayer.PLAYER_ID}`}
-            player={leftPlayer}
-            onClick={() => handlePick('left')}
-            showFullStats={expandedLeft}
-            onToggleStats={() => setExpandedLeft(p => !p)}
-          />
-        </AnimatePresence>
+            <div className="arena">
+              <div className="arena-slot">
+                <AnimatePresence mode="wait">
+                  <PlayerCard
+                    key={`left-${leftPlayer.PLAYER_ID}`}
+                    player={leftPlayer}
+                    onClick={() => handlePick('left')}
+                    showFullStats={expandedLeft}
+                    onToggleStats={() => setExpandedLeft(p => !p)}
+                  />
+                </AnimatePresence>
+              </div>
 
-        <div className="vs-badge">VS</div>
+              <div className="vs-badge">VS</div>
 
-        <AnimatePresence mode='popLayout'>
-          <PlayerCard
-            key={`right-${rightPlayer.PLAYER_ID}`}
-            player={rightPlayer}
-            onClick={() => handlePick('right')}
-            showFullStats={expandedRight}
-            onToggleStats={() => setExpandedRight(p => !p)}
-          />
-        </AnimatePresence>
-      </div>
+              <div className="arena-slot">
+                <AnimatePresence mode="wait">
+                  <PlayerCard
+                    key={`right-${rightPlayer.PLAYER_ID}`}
+                    player={rightPlayer}
+                    onClick={() => handlePick('right')}
+                    showFullStats={expandedRight}
+                    onToggleStats={() => setExpandedRight(p => !p)}
+                  />
+                </AnimatePresence>
+              </div>
+            </div>
+
+            <button className="restart-btn" onClick={resetGame}>
+              Restart
+            </button>
+          </motion.section>
+        )}
+
+        {screen === 'leaders' && (
+          <motion.section
+            key="leaders"
+            className="screen-panel"
+            initial={{ opacity: 0, y: 80 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -80 }}
+            transition={{ duration: 0.35 }}
+          >
+            <header className="header">
+              <div className="logo-text">DAILY SHOWDOWN</div>
+              <div className="subtitle">Tonight's top stat leaders</div>
+            </header>
+            <div className="leaders-flow">
+              {topPerformers.slice(0, 5).map((player, idx) => (
+                <div key={`${player.PLAYER_ID}-${idx}`} className="leaders-flow-item" style={{ '--offset': idx - 2 }}>
+                  <LeadersPreviewCard player={player} rank={idx + 1} />
+                </div>
+              ))}
+            </div>
+
+            <div className="screen-panel-actions">
+              <button className="hub-btn hub-btn-primary" onClick={() => setScreen('game')}>Fresh Game</button>
+              <button className="restart-btn" onClick={() => setScreen('home')}>Back</button>
+            </div>
+          </motion.section>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

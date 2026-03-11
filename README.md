@@ -1,4 +1,4 @@
-# 🏀 NBA Daily Showdown
+–# 🏀 NBA Daily Showdown
 
 **The ultimate daily NBA player showdown game where YOU decide who had the best performance!**
 
@@ -13,10 +13,43 @@ Think of it as "Hot or Not" meets NBA stats, with a twist of March Madness brack
 ## ✨ How It Works
 
 1. **The Setup**: We grab real box scores from recent NBA games using the official NBA API
-2. **The Showdown**: Two players face off. You pick who had the better night (based on vibes, stats, or pure bias—we don't judge!)
-3. **The Twist**: Your chosen player gets thrown BACK into the deck to potentially face off again
+2. **The Showdown**: Two players face off. You pick who had the better night (based on vibes, stats, or pure bias we don't judge!)
+3. **The Motion**: Your chosen player gets thrown BACK into the deck to potentially face off again
 4. **The Grind**: Keep picking until you've narrowed down the entire field
 5. **The Crown**: The last player standing becomes YOUR "Player of the Day" 👑
+
+## 📖 How to Play
+
+1. **Start a game** — The app loads today's top performers (up to 36 players by Game Score). Two players appear side-by-side.
+2. **Pick your favorite** — Tap or click the card of the player you think had the better performance. Use the stats, Game Score, or your gut—there's no wrong answer.
+3. **Keep going** — Your pick stays in the deck and may face off again. The other player is eliminated. New matchups appear until one player remains.
+4. **Crown your winner** — The last player standing is your Player of the Day. Share your pick or play again.
+5. **Restart anytime** — Tap **Restart** at the bottom to abandon your current run and start fresh with a new deck.
+
+## 📊 Understanding the Metrics
+
+### Game Score
+A single number that summarizes a player's performance. Higher is better. Formula:
+
+**Game Score = PTS + (REB × 1.2) + (AST × 1.5) + (STL × 2) + (BLK × 2) − (TOV × 1.5)**
+
+- **PTS** — Points scored
+- **REB** — Rebounds (weighted 1.2×)
+- **AST** — Assists (weighted 1.5×)
+- **STL** — Steals (weighted 2×)
+- **BLK** — Blocks (weighted 2×)
+- **TOV** — Turnovers (penalized 1.5×)
+
+### Stat Pills (PTS, REB, AST, STL, BLK, +/-)
+- **Green** — Above league average
+- **Red** — Below league average
+- **Gray** — Near average
+
+### +/- (Plus/Minus)
+How many points the team scored vs. allowed while the player was on the court. Positive = team outscored the opponent.
+
+### Deck Avg
+The average Game Score of all players in today's deck. Compare your winner's score to see how they stacked up.
 
 ## 🎯 Features
 
@@ -99,7 +132,7 @@ export ALLOWED_ORIGINS="http://localhost:5173,https://yourdomain.com"
 
 We wanted this to feel **premium**. No basic MVP vibes here. Think:
 - **Dark mode by default** (because we're not savages)
-- **Glassmorphism** (it's 2024, we fancy now)
+- **Glassmorphism** 
 - **Smooth animations** (every click should feel satisfying)
 - **Real player photos** (no placeholder silhouettes)
 - **Team logos** (rep your squad)
