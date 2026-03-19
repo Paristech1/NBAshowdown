@@ -63,7 +63,6 @@ async function getTodayScoreboardGameIds() {
 
 function getTargetDate(gameDates) {
   const today = new Date();
-  const todayStr = formatDateMMDDYYYY(today);
 
   // Check today's scoreboard first (handled in handler)
   for (let d = 0; d <= DAYS_LOOKBACK; d++) {
@@ -174,7 +173,7 @@ function shuffle(arr) {
   return a;
 }
 
-export default async (req, context) => {
+export default async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, {
       status: 204,

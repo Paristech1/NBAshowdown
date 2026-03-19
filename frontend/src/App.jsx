@@ -1,5 +1,6 @@
-import { useEffect, useMemo, useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'framer-motion'; // eslint-disable-line no-unused-vars
+import { useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-unused-vars -- `motion` is used as motion.div etc.
+import { motion, AnimatePresence } from 'framer-motion';
 import { FaBasketballBall, FaChevronDown, FaChevronUp, FaHistory, FaTwitter, FaFacebookF, FaInstagram, FaFire } from 'react-icons/fa';
 import { MdVerified } from 'react-icons/md';
 import React from 'react';
@@ -259,27 +260,6 @@ const VictoryWinnerCard = ({ player, gameScore, deckAvg }) => {
 };
 
 
-const LeadersPreviewCard = ({ player }) => {
-  const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
-
-  return (
-    <div className="leaders-card">
-      <img
-        src={imgUrl}
-        alt={player.PLAYER_NAME}
-        className="leaders-card-bg"
-        onError={(e) => { e.currentTarget.src = PLACEHOLDER_SVG; }}
-      />
-      <div className="leaders-card-overlay" />
-      <div className="leaders-card-content">
-        <div className="leaders-player-name">{player.PLAYER_NAME}</div>
-        <div className="leaders-player-team">{player.TEAM_ABBREVIATION}</div>
-        <div className="leaders-player-score">{player.PTS} PTS • {player.AST} AST • {player.REB} REB</div>
-      </div>
-    </div>
-  );
-};
-
 // --- PlayerCard ---
 const PlayerCard = ({ player, onClick, isWinner, isLoser, showFullStats, onToggleStats, variant = 'full' }) => {
   const imgUrl = `https://cdn.nba.com/headshots/nba/latest/1040x760/${player.PLAYER_ID}.png`;
@@ -432,8 +412,6 @@ function App() {
   const [matchLogExpanded, setMatchLogExpanded] = useState(false);
   const [shareImageLoading, setShareImageLoading] = useState(false);
   const [screen, setScreen] = useState('home');
-
-  const winnerCardRef = useRef(null);
 
   const PARTICLE_POSITIONS = [
     { left: '10%', top: '20%', delay: 0 },
@@ -660,7 +638,7 @@ function App() {
             <div className="victory-subheader">One star rose above the rest tonight.</div>
           </motion.header>
 
-          <div className="arena" ref={winnerCardRef}>
+          <div className="arena">
             <VictoryWinnerCard
               player={winner}
               gameScore={winnerScore}
